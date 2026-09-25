@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
-import { getVideoPoster, getVideoUrl, isGoogleDriveVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl } from '../lib/supabase';
 
 function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO", headerParagraph = "I TRIED NOT DOING FILMMAKING, AND I HATED EVERY BIT OF IT. YOU'RE IN GOOD HANDS." }) {
 
