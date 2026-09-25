@@ -12,5 +12,5 @@ async function request(table, params = '') {
 export const getBlogs = () => request('blog', '?select=slug,title,content&order=sort_order.asc');
 export const getProjects = () => request('project', '?select=title,slug,category,video_src,is_external_link,has_blob,show_carousel,is_vertical,description&order=sort_order.asc').then(rows => rows.map(row => ({ title: row.title, slug: row.slug, category: row.category, videoSrc: row.video_src, isExternalLink: row.is_external_link, hasBlob: row.has_blob, showCarousel: row.show_carousel, isVertical: row.is_vertical, description: row.description })));
 export const getWritings = () => request('writing', '?select=external_id,title,url&order=sort_order.asc');
-export const getProjectBySlug = async slug => (await getProjects()).find(project => project.slug === slug) || (await getProjects())[0] || null;
+export const getProjectBySlug = async slug => { const projects = await getProjects(); return projects.find(project => project.slug === slug) || projects[0] || null; };
 export { SUPABASE_URL, SUPABASE_KEY };
