@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import TextRevealSection from '../components/TextRevealSection';
 import Footer from '../components/Footer';
-import { getProjectBySlug } from '../data/projects';
+import { getProjectBySlug } from '../lib/supabase';
 import './ProjectDetailPage.css';
 import { getVideoPoster, getVideoUrl } from '../lib/supabase';
 
