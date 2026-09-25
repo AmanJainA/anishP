@@ -8,6 +8,7 @@ import WorkPage from './pages/WorkPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import WritingPage from './pages/WritingPage';
 import Navbar from './components/Navbar';
+import AdminPage from './pages/AdminPage';
 import { SUPABASE_URL, SUPABASE_KEY } from './lib/supabase';
 
 const pageVariants = {
@@ -40,6 +41,7 @@ function App() {
     <Navbar isDark={isDarkNavbar} />
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/" element={<motion.div key="home" variants={pageVariants} initial="initial" animate="animate" exit="exit"><HomePage /></motion.div>} />
         <Route path="/about" element={<motion.div key="about" variants={pageVariants} initial="initial" animate="animate" exit="exit"><AboutPage /></motion.div>} />
         <Route path="/portfolio" element={<motion.div key="portfolio" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WorkPage /></motion.div>} />
