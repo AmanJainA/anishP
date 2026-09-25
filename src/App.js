@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import WorkPage from './pages/WorkPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import WritingPage from './pages/WritingPage';
+import WritingsPage from './pages/WritingsPage';
 import Navbar from './components/Navbar';
 import AdminPage from './pages/AdminPage';
 import { SUPABASE_URL, SUPABASE_KEY } from './lib/supabase';
@@ -51,7 +52,7 @@ function App() {
         <Route path="/portfolio" element={<motion.div key="portfolio" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WorkPage /></motion.div>} />
         <Route path="/portofolio" element={<motion.div key="project-detail-empty" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
         <Route path="/portofolio/:slug" element={<motion.div key="project-detail" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
-        <Route path="/writings" element={<motion.div key="writings" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingPage /></motion.div>} />
+        <Route path="/writings" element={<motion.div key="writings" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingsPage /></motion.div>} />
       </Routes>
     </AnimatePresence>
   </div>;
