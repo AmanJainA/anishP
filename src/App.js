@@ -20,8 +20,8 @@ const pageVariants = {
 
 function App() {
   const location = useLocation();
-  const isAdminPath = location.pathname.startsWith('/admin');
-  const isDarkNavbar = location.pathname === '/about' || location.pathname.startsWith('/portofolio/') || location.pathname === '/writings';
+  const isAdminPath = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  const isDarkNavbar = location.pathname === '/about' || location.pathname.startsWith('/portfolio/') || location.pathname === '/writings';
 
   useEffect(() => {
     if (isAdminPath) return;
@@ -43,7 +43,7 @@ function App() {
     const sendVisit = (extra={}) => fetch(`${SUPABASE_URL}/functions/v1/track-visit`, {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
-      body:JSON.stringify({ path:window.location.pathname, username:visitorName, ...extra }),
+      body:JSON.stringify({ path:window.location.pathname.replace(/^\/anishP/, ''), username:visitorName, ...extra }),
       keepalive:true
     }).catch(() => {});
     if (navigator.geolocation) {
@@ -65,8 +65,7 @@ function App() {
         <Route path="/" element={<motion.div key="home" variants={pageVariants} initial="initial" animate="animate" exit="exit"><HomePage /></motion.div>} />
         <Route path="/about" element={<motion.div key="about" variants={pageVariants} initial="initial" animate="animate" exit="exit"><AboutPage /></motion.div>} />
         <Route path="/portfolio" element={<motion.div key="portfolio" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WorkPage /></motion.div>} />
-        <Route path="/portofolio" element={<motion.div key="project-detail-empty" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
-        <Route path="/portofolio/:slug" element={<motion.div key="project-detail" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
+        <Route path="/portfolio/:slug" element={<motion.div key="project-detail" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
         <Route path="/writings" element={<motion.div key="writings" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingsPage /></motion.div>} />
       </Routes>
     </AnimatePresence>
