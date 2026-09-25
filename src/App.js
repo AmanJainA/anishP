@@ -19,9 +19,11 @@ const pageVariants = {
 
 function App() {
   const location = useLocation();
+  const isAdminPath = location.pathname.startsWith('/admin');
   const isDarkNavbar = location.pathname === '/about' || location.pathname.startsWith('/portofolio/') || location.pathname === '/writings';
 
   useEffect(() => {
+    if (isAdminPath) return;
     const sendVisit = (extra={}) => fetch(`${SUPABASE_URL}/functions/v1/track-visit`, {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
@@ -35,7 +37,9 @@ function App() {
         { enableHighAccuracy:false, timeout:4000, maximumAge:300000 }
       );
     } else sendVisit();
-  }, [location.pathname]);
+  }, [location.pathname, isAdminPath]);
+
+  if (isAdminPath) return <AdminPage />;
 
   return <div className="App">
     <Navbar isDark={isDarkNavbar} />
