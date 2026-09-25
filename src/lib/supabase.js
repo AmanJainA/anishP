@@ -32,7 +32,7 @@ export const getGoogleDrivePreviewUrl = value => {
 // embedding Google's player UI.
 export const getGoogleDriveDirectUrl = value => {
   const id = getGoogleDriveFileId(value);
-  return id ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}` : '';
+  return id ? `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}` : '';
 };
 
 export const getVideoUrl = value => {
