@@ -15,20 +15,25 @@ async function request(table, params = '') {
 // download URL so the same HTML5 video player can be used.
 export const isExternalVideoUrl = value => /^https?:\/\//i.test(String(value || '').trim());
 
+export const isGoogleDriveVideoUrl = value => /drive\.google\.com/i.test(String(value || ''));
+
+export const getGoogleDrivePreviewUrl = value => {
+  const raw = String(value || '').trim();
+  const match = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  const id = raw.match(/[?&]id=([^&#]+)/i);
+  if (id) return `https://drive.google.com/file/d/${id[1]}/preview`;
+  return raw;
+};
+
 export const getVideoUrl = value => {
   const raw = String(value || '').trim();
   if (!raw) return '';
 
-  const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (driveMatch) {
-    return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
-  }
-
-  // Also accept the Google Drive uc/open form if an ID is supplied.
-  const driveId = raw.match(/[?&]id=([^&#]+)/i);
-  if (/drive\.google\.com/i.test(raw) && driveId) {
-    return `https://drive.google.com/uc?export=download&id=${driveId[1]}`;
-  }
+  // Google Drive does not reliably expose a raw MP4 stream to HTML5 video.
+  // Use Google's preview player for Drive files; it preserves the same visual
+  // container while avoiding the download/confirmation HTML returned by Drive.
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
 
   // Existing portfolio values are base paths such as /project-name/video.
   return isExternalVideoUrl(raw) ? raw : `${raw}.mp4`;
