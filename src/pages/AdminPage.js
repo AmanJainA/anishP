@@ -17,7 +17,7 @@ export default function AdminPage(){
  const reset=()=>{setEdit(null);setForm({...forms[active]})};
  const editRow=r=>{const f={...forms[active]};Object.keys(f).forEach(k=>f[k]=r[k]??f[k]);setEdit(r.id);setForm(f);window.scrollTo({top:0,behavior:'smooth'})};
  const save=async e=>{e.preventDefault();setLoading(true);try{edit?await adminUpdate(active,edit,form):await adminCreate(active,form);setMsg(edit?'Updated successfully.':'Added successfully.');reset();await load()}catch(e){setMsg(e.message)}finally{setLoading(false)}};
- const del=async id=>{if(!confirm('Delete this item?'))return;try{await adminDelete(active,id);setMsg('Deleted successfully.');await load()}catch(e){setMsg(e.message)}};
+ const del=async id=>{if(!window.confirm('Delete this item?'))return;try{await adminDelete(active,id);setMsg('Deleted successfully.');await load()}catch(e){setMsg(e.message)}};
  const exportData=filtered,name=`${active}-report`;
  const copy=async()=>{const c=cols[active];await navigator.clipboard.writeText([c.join('\t'),...exportData.map(r=>c.map(k=>String(r[k]??'')).join('\t'))].join('\n'));setMsg('Filtered report copied.')};
  const excel=()=>{const c=cols[active],d=exportData.map(r=>Object.fromEntries(c.map(k=>[pretty(k),r[k]??'']))),ws=XLSX.utils.json_to_sheet(d),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,names[active]);XLSX.writeFile(wb,name+'.xlsx')};
