@@ -10,9 +10,6 @@ async function request(table, params = '') {
   return response.json();
 }
 
-// Accept the existing local video paths exactly as before, while also accepting
-// external video URLs. Google Drive share links are converted to a browser-playable
-// download URL so the same HTML5 video player can be used.
 export const isExternalVideoUrl = value => /^https?:\/\//i.test(String(value || '').trim());
 
 export const isGoogleDriveVideoUrl = value => /drive\.google\.com/i.test(String(value || ''));
@@ -20,22 +17,16 @@ export const isGoogleDriveVideoUrl = value => /drive\.google\.com/i.test(String(
 export const getGoogleDrivePreviewUrl = value => {
   const raw = String(value || '').trim();
   const match = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  if (match) return `https://drive.google.com/file/d/${match[1]}/preview?autoplay=1`;
   const id = raw.match(/[?&]id=([^&#]+)/i);
-  if (id) return `https://drive.google.com/file/d/${id[1]}/preview`;
+  if (id) return `https://drive.google.com/file/d/${id[1]}/preview?autoplay=1`;
   return raw;
 };
 
 export const getVideoUrl = value => {
   const raw = String(value || '').trim();
   if (!raw) return '';
-
-  // Google Drive does not reliably expose a raw MP4 stream to HTML5 video.
-  // Use Google's preview player for Drive files; it preserves the same visual
-  // container while avoiding the download/confirmation HTML returned by Drive.
   if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
-
-  // Existing portfolio values are base paths such as /project-name/video.
   return isExternalVideoUrl(raw) ? raw : `${raw}.mp4`;
 };
 
