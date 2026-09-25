@@ -1,5 +1,5 @@
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || 'https://ixjdjvkktlzgiyojnsto.supabase.co';
-const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_Qb66X-cvzAckaQev2ku1VA__CoLmIB1';
+const SUPABASE_KEY = 'sb_publishable_Qb66X-cvzAckaQev2ku1VA__CoLmIB1';
 const SCHEMA = 'anish-portfolio';
 
 async function request(table, params = '') {
