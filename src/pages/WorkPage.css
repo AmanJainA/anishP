@@ -1,0 +1,10 @@
+.work-page-container {
+  background-color: #0e1111;
+  color: #F0EFEA;
+  min-height: 100vh;
+  padding-top: 10vh; /* Changed padding to 10vh */
+}
+
+.work-page-content {
+  padding: 20px 0;
+}

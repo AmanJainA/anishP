@@ -1,0 +1,79 @@
+.main-header {
+  height: 20vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 40px;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  color: #F0EFEA;
+  background-color: transparent;
+}
+
+.main-nav {
+  font-family: 'CustomFont', sans-serif;
+  /* font-family: 'Roboto Mono', monospace; Monospaced font */
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.9em;
+}
+
+.main-nav a {
+  text-decoration: none;
+  color: inherit;
+  margin: 0 10px;
+}
+
+.main-nav span {
+  margin: 0 10px;
+}
+
+.main-logo a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.main-logo {
+  font-family: 'CustomFont', sans-serif; /* Display font */
+  font-size: 5em; /* Adjust as needed */
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  color: #DFFF00;
+}
+
+.dark-navbar {
+  /* background-color: #0e1111; */
+  color: #F0EFEA;
+}
+
+
+
+@media (max-width: 768px) {
+  .main-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .main-nav {
+    margin-bottom: 15px;
+  }
+  .main-logo {
+    font-size: 3em;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .main-logo {
+    font-size: 2em;
+  }
+   .main-nav {
+  font-family: 'CustomFont', sans-serif;
+  /* font-family: 'Roboto Mono', monospace; Monospaced font */
+  font-size: 0.6em;
+}
+}

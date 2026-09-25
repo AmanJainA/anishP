@@ -1,0 +1,118 @@
+.main-footer {
+  background-color: #F3F4F6; /* Removed background color */
+  padding: 20px; /* Padding to create space for the border */
+  box-sizing: border-box;
+  width: 100vw;
+  height: 40vh; /* Changed to 25% of viewport height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+
+
+/* Removed .footer-top-right styles */
+
+.footer-center-cta {
+  text-align: center;
+}
+
+.cta-line-1 {
+  /* font-family: 'Helvetica Now Display', sans-serif; Placeholder, use a clean bold sans-serif */
+  font-family: 'CustomFont', sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 2.5em; /* Adjust as needed */
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.05em; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cta-line-1 {
+  color: #0e1111; /* Reverted to White text */
+}
+
+.cta-link {
+  color: #FFFFFF; /* Reverted to White text for links */
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.cta-link:hover {
+  color: #FFD600; /* Yellow on hover */
+}
+
+.cta-separator {
+  color: #FFFFFF; /* Reverted to White text for separator */
+  margin: 0 0.2em;
+}
+
+
+.cta-line-2 {
+  font-family: 'CustomFont', sans-serif; /* Ultra-bold display font */
+  color: #c1121f; /* Changed to Red */
+  text-transform: uppercase;
+  font-size: 8em; /* Significantly larger */
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.05em; /* Negative letter-spacing */
+  text-decoration: none; /* Remove underline for link */
+  transition: color 0.3s ease;
+}
+
+.cta-line-2 a {
+  color: #c1121f; /* Changed to Red */
+  }
+
+  .cta-line-2 span {
+  color: #c1121f; /* Changed to Red */
+  }
+.cta-line-2 a:hover {
+  color: #0e1111; /* Reverted to Black on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .cta-line-1 {
+    font-size: 2.5em;
+  }
+  .cta-line-2 {
+    font-size: 6em;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-footer {
+  }
+  .footer-border-frame {
+    border: none; /* Removed white border */
+  }
+  .footer-border-frame::before {
+  }
+  /* Removed .footer-top-right responsive styles */
+  .footer-center-cta {
+  }
+  .cta-line-1 {
+    font-size: 2em;
+  }
+  .cta-line-2 {
+    font-size: 4em;
+  }
+  .footer-utility-text,
+  .footer-utility-link {
+    font-size: 0.7em;
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-line-1 {
+    font-size: 1.5em;
+  }
+  .cta-line-2 {
+    font-size: 3em;
+  }
+  }

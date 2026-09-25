@@ -1,0 +1,128 @@
+.project-detail-page {
+  background-color: #0e1111; /* Black background */
+  color: #F3F4F6; /* White text */
+  min-height: 100vh;
+}
+
+.project-detail-content {
+  padding-top: 15vh; /* Adjusted padding */
+}
+
+.black-background-section {
+  background-color: #0e1111;
+  color: #F3F4F6;
+  padding: 40px 20px;
+}
+
+.project-background-video-container {
+  position: relative;
+  width: 80%; /* Match ProjectsSection card width */
+  max-width: 900px; /* Match ProjectsSection card max-width */
+  aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+  margin: 40px auto; /* Center and add vertical spacing */
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 400px; /* Ensure visibility */
+}
+
+.project-background-video {
+  position: absolute;
+  top: 5px; /* Adjust for outer border thickness */
+  left: 5px; /* Adjust for outer border thickness */
+  width: calc(100% - 10px); /* Adjust for outer border thickness */
+  height: calc(100% - 10px); /* Adjust for outer border thickness */
+  object-fit: cover;
+  z-index: 0; /* Changed z-index */
+  border: none; /* Removed inner border */
+  box-sizing: border-box;
+}
+
+
+
+.project-header-section {
+  text-align: center;
+  padding: 40px 20px;
+    margin-top: 5vh;
+}
+
+.project-detail-title {
+  font-family: 'CustomFont', sans-serif;
+  font-size: 4em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.project-detail-category {
+  font-family: 'CustomFont', sans-serif;
+  font-size: 1.2em;
+  text-transform: uppercase;
+  color: #DFFF00;
+}
+
+.project-inline-video-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.project-inline-video {
+  width: 100%;
+  height: 60vh;
+  margin-bottom: 10vh;
+  max-width: 600px; /* Reduced max-width */
+  aspect-ratio: 16 / 9; /* Ensure aspect ratio */
+}
+
+.image-slideshow-container {
+  position: relative;
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 10vh;
+}
+
+.project-image {
+  width: 80%; /* Match background video container width */
+  max-width: 900px; /* Match background video container max-width */
+  height: auto;
+}
+
+
+.slideshow-nav {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  padding: 0 20px;
+}
+
+.nav-button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 1.5em;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+  .project-header-section {
+    margin-top: 10vh;
+}
+}
+@media (max-width: 768px) {
+.project-detail-title {
+  font-size: 2.5em; 
+}
+.image-slideshow-container {
+  padding: 0px;
+}
+}

@@ -1,0 +1,8 @@
+.about-page-content {
+  margin-top: 20vh; /* Changed padding to 10vh */
+  background-color: #0e1111; /* Black background */
+  color: #F3F4F6; /* White text */
+  min-height: 100vh; /* Ensure it takes full height */
+  position: relative; /* Needed for proper positioning */
+  overflow: hidden; /* Needed for proper positioning */
+}

@@ -1,0 +1,11 @@
+/* Add your styles for WritingsPage here */
+.writings-page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.writings-page-content {
+  flex-grow: 1;
+  padding: 20px;
+}
