@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
-import { getVideoPoster, getVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl, isGoogleDriveVideoUrl } from '../lib/supabase';
 
 function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO", headerParagraph = "I TRIED NOT DOING FILMMAKING, AND I HATED EVERY BIT OF IT. YOU'RE IN GOOD HANDS." }) {
 
@@ -48,10 +48,21 @@ function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO"
             transition={{ duration: 0.6, delay: index * 0.1 }}
           >
             <div className="project-card-inner-border">
-              <video autoPlay loop muted playsInline className="project-video" loading="lazy" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
-                <source src={getVideoUrl(project.videoSrc)} />
-                Your browser does not support the video tag.
-              </video>
+              {isGoogleDriveVideoUrl(project.videoSrc) ? (
+                <iframe
+                  className="project-video"
+                  src={getVideoUrl(project.videoSrc)}
+                  title={project.title}
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                  frameBorder="0"
+                />
+              ) : (
+                <video autoPlay loop muted playsInline className="project-video" loading="lazy" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
+                  <source src={getVideoUrl(project.videoSrc)} />
+                  Your browser does not support the video tag.
+                </video>
+              )}
               <div className="project-text-overlay">
                 {project.hasBlob && <div className="yellow-blob"></div>}
                 <h3 className="project-title">{project.title}</h3>
