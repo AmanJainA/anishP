@@ -4,7 +4,7 @@ import {Document,Packer,Paragraph,Table as DocxTable,TableCell,TableRow,TextRun}
 import * as XLSX from 'xlsx'; import {jsPDF} from 'jspdf'; import './AdminPage.css';
 
 const forms={blog:{slug:'',title:'',content:'',sort_order:0},project:{title:'',slug:'',category:'',video_src:'',is_external_link:false,has_blob:false,show_carousel:true,is_vertical:false,description:'',sort_order:0},writing:{external_id:'',title:'',url:'',sort_order:0}};
-const cols={blog:['id','slug','title','content','sort_order','created_at','updated_at'],project:['id','title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order','created_at','updated_at'],writing:['id','external_id','title','url','sort_order','created_at','updated_at'],visits:['id','username','email','os','browser','ip_address','location','macaddress','path','referrer','visited_at']};
+const cols={blog:['id','slug','title','content','sort_order','created_at','updated_at'],project:['id','title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order','created_at','updated_at'],writing:['id','external_id','title','url','sort_order','created_at','updated_at'],visits:['id','username','email','os','browser','ip_address','location','macaddress','path','referrer','visit_count','daily_visit_count','daily_visit_date','visited_at']};
 const names={blog:'Blogs',project:'Projects',writing:'Writings',visits:'Visits'};
 const pretty=k=>k.replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());
 const menu=[['dashboard','Dashboard','⌂'],['project','Projects','▣'],['blog','Blogs','▤'],['writing','Writings','✎'],['visits','Visits','◉']];
@@ -14,7 +14,7 @@ function Dashboard({stats,monthly,recent,go}) {
  return <div className="dashboard">
   <div className="dashboard-welcome"><div><span className="admin-kicker">OVERVIEW</span><h2>Good to see you.</h2><p>Here is what is happening across your portfolio.</p></div><button className="refresh-btn" onClick={stats.refresh}>↻ Refresh</button></div>
   <div className="stat-grid">
-   <button className="stat-card" onClick={()=>go('visits')}><span className="stat-icon">◉</span><span className="stat-label">Total Visits</span><strong>{stats.visits}</strong><small>Portfolio traffic</small></button>
+   <button className="stat-card" onClick={()=>go('visits')}><span className="stat-icon">◉</span><span className="stat-label">Total Visits</span><strong>{stats.visits}</strong><small>All tracked visits</small></button><button className="stat-card today-stat" onClick={()=>go('visits')}><span className="stat-icon">◷</span><span className="stat-label">Today's Visits</span><strong>{stats.today}</strong><small>Visits today</small></button>
    <button className="stat-card" onClick={()=>go('project')}><span className="stat-icon">▣</span><span className="stat-label">Projects</span><strong>{stats.projects}</strong><small>Published projects</small></button>
    <button className="stat-card" onClick={()=>go('blog')}><span className="stat-icon">▤</span><span className="stat-label">Blogs</span><strong>{stats.blogs}</strong><small>Published articles</small></button>
    <button className="stat-card" onClick={()=>go('writing')}><span className="stat-icon">✎</span><span className="stat-label">Writings</span><strong>{stats.writings}</strong><small>Writing links</small></button>
@@ -34,9 +34,10 @@ export default function AdminPage(){
  const load=async()=>{if(active==='dashboard'){await loadDashboard();return}setLoading(true);try{const d=active==='visits'?await adminVisits():await adminList(active);setRows(d.rows||[]);setPg(1)}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
  useEffect(()=>{if(logged)load()},[logged,active]);
 
+ const todayKey=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const monthly=useMemo(()=>{const now=new Date();const out=[];for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;out.push({key,label:d.toLocaleDateString('en-US',{month:'short'}),count:dashboard.visits.filter(v=>{const x=new Date(v.visited_at);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`===key}).length})}return out},[dashboard.visits]);
  const recent=useMemo(()=>[...dashboard.projects].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5),[dashboard.projects]);
- const stats={visits:dashboard.visits.length,projects:dashboard.projects.length,blogs:dashboard.blogs.length,writings:dashboard.writings.length,refresh:loadDashboard};
+ const stats={visits:dashboard.visits.reduce((sum,v)=>sum+Number(v.visit_count||1),0),today:dashboard.visits.reduce((sum,v)=>sum+(v.daily_visit_date===todayKey?Number(v.daily_visit_count||0):0),0),projects:dashboard.projects.length,blogs:dashboard.blogs.length,writings:dashboard.writings.length,refresh:loadDashboard};
  const filtered=useMemo(()=>{const x=q.trim().toLowerCase();return x?rows.filter(r=>Object.values(r).some(v=>String(v??'').toLowerCase().includes(x))):rows},[rows,q]);
  const shown=filtered.slice((pg-1)*limit,pg*limit), pages=Math.max(1,Math.ceil(filtered.length/limit));
  const login=async e=>{e.preventDefault();setErr('');try{await adminLogin(email,password);setLogged(true);setPassword('')}catch(e){setErr(e.message)}};
