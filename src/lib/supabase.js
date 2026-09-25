@@ -14,19 +14,31 @@ export const isExternalVideoUrl = value => /^https?:\/\//i.test(String(value || 
 
 export const isGoogleDriveVideoUrl = value => /drive\.google\.com/i.test(String(value || ''));
 
-export const getGoogleDrivePreviewUrl = value => {
+export const getGoogleDriveFileId = value => {
   const raw = String(value || '').trim();
   const match = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (match) return `https://drive.google.com/file/d/${match[1]}/preview?autoplay=1&controls=0`;
+  if (match) return match[1];
   const id = raw.match(/[?&]id=([^&#]+)/i);
-  if (id) return `https://drive.google.com/file/d/${id[1]}/preview?autoplay=1&controls=0`;
-  return raw;
+  return id ? id[1] : '';
+};
+
+export const getGoogleDrivePreviewUrl = value => {
+  const id = getGoogleDriveFileId(value);
+  return id ? `https://drive.google.com/file/d/${id}/preview?autoplay=1` : String(value || '').trim();
+};
+
+// Drive's public download endpoint is used as the native <video> source.
+// This keeps the portfolio on the browser's normal video element instead of
+// embedding Google's player UI.
+export const getGoogleDriveDirectUrl = value => {
+  const id = getGoogleDriveFileId(value);
+  return id ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}` : '';
 };
 
 export const getVideoUrl = value => {
   const raw = String(value || '').trim();
   if (!raw) return '';
-  if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
   return isExternalVideoUrl(raw) ? raw : `${raw}.mp4`;
 };
 
