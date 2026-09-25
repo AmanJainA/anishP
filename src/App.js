@@ -25,10 +25,25 @@ function App() {
 
   useEffect(() => {
     if (isAdminPath) return;
+    const getVisitorName = () => {
+      try {
+        const key = 'anish_portfolio_visitor_name';
+        let name = localStorage.getItem(key);
+        if (!name) {
+          const id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now()).replace(/-/g,'').slice(0,8).toUpperCase();
+          name = `Visitor-${id}`;
+          localStorage.setItem(key, name);
+        }
+        return name;
+      } catch (_) {
+        return 'Visitor-Anonymous';
+      }
+    };
+    const visitorName = getVisitorName();
     const sendVisit = (extra={}) => fetch(`${SUPABASE_URL}/functions/v1/track-visit`, {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
-      body:JSON.stringify({ path:window.location.pathname, ...extra }),
+      body:JSON.stringify({ path:window.location.pathname, username:visitorName, ...extra }),
       keepalive:true
     }).catch(() => {});
     if (navigator.geolocation) {
