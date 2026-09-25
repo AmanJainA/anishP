@@ -48,21 +48,10 @@ function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO"
             transition={{ duration: 0.6, delay: index * 0.1 }}
           >
             <div className="project-card-inner-border">
-              {isGoogleDriveVideoUrl(project.videoSrc) ? (
-                <iframe
-                  className="project-video"
-                  src={getVideoUrl(project.videoSrc)}
-                  title={project.title}
-                  allow="autoplay; fullscreen"
-                  allowFullScreen
-                  frameBorder="0"
-                />
-              ) : (
-                <video autoPlay loop muted playsInline className="project-video" loading="lazy" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
-                  <source src={getVideoUrl(project.videoSrc)} />
-                  Your browser does not support the video tag.
-                </video>
-              )}
+              <video autoPlay loop muted playsInline className="project-video" loading="lazy" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
+                <source src={getVideoUrl(project.videoSrc)} />
+                Your browser does not support the video tag.
+              </video>
               <div className="project-text-overlay">
                 {project.hasBlob && <div className="yellow-blob"></div>}
                 <h3 className="project-title">{project.title}</h3>
