@@ -2,6 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SCHEMA = "anish-portfolio";
+const SERVICE_KEY = (() => {
+  const raw = Deno.env.get("SUPABASE_SECRET_KEYS") || "";
+  try {
+    const keys = JSON.parse(raw);
+    return keys.default || Object.values(keys)[0] || "";
+  } catch {
+    return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  }
+})();
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-admin-token",
