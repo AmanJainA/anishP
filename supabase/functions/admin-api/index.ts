@@ -2,21 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SCHEMA = "anish-portfolio";
-const ADMIN_EMAIL = "admin@anish.com";
-const ADMIN_PASSWORD_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
-
-function getSecretKey() {
-  const raw = Deno.env.get("SUPABASE_SECRET_KEYS") || "";
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed.default || Object.values(parsed)[0] || "";
-  } catch {
-    return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || raw;
-  }
-}
-
-const SERVICE_KEY = getSecretKey();
-
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-admin-token",
@@ -66,17 +51,6 @@ async function requireSession(req:Request, body:any) {
   return rows[0];
 }
 
-async function ensureAdmin() {
-  const rows = await db(`users?select=id,email,role&email=eq.${encodeURIComponent(ADMIN_EMAIL)}&limit=1`);
-  if (!rows?.length) {
-    await db("users", {
-      method:"POST",
-      headers:{Prefer:"return=minimal"},
-      body:JSON.stringify({email:ADMIN_EMAIL,password_hash:ADMIN_PASSWORD_HASH,role:"admin"})
-    });
-  }
-}
-
 const tableFields:any = {
   blog: ["slug","title","content","sort_order"],
   project: ["title","slug","category","video_src","is_external_link","has_blob","show_carousel","is_vertical","description","sort_order"],
@@ -96,7 +70,6 @@ Deno.serve(async (req:Request) => {
     const action = body.action;
 
     if (action === "login") {
-      await ensureAdmin();
       const email = String(body.email || "").trim().toLowerCase();
       const password = String(body.password || "");
       if (!email || !password) return json({error:"Email and password are required"},400);
