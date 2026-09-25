@@ -19,7 +19,7 @@ export const getGoogleDrivePreviewUrl = value => {
   const match = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
   if (match) return `https://drive.google.com/file/d/${match[1]}/preview?autoplay=1&controls=0`;
   const id = raw.match(/[?&]id=([^&#]+)/i);
-  if (id) return `https://drive.google.com/file/d/${id[1]}/preview?autoplay=1`;
+  if (id) return `https://drive.google.com/file/d/${id[1]}/preview?autoplay=1&controls=0`;
   return raw;
 };
 
