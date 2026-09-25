@@ -4,7 +4,7 @@ const SCHEMA = 'anish-portfolio';
 
 async function request(table, params = '') {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Accept-Profile': SCHEMA }
+    headers: { apikey: SUPABASE_KEY, 'Accept-Profile': SCHEMA }
   });
   if (!response.ok) throw new Error(`Supabase request failed: ${response.status} ${await response.text()}`);
   return response.json();
