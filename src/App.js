@@ -21,7 +21,7 @@ const pageVariants = {
 function App() {
   const location = useLocation();
   const isAdminPath = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  const isDarkNavbar = location.pathname === '/about' || location.pathname.startsWith('/portfolio/') || location.pathname === '/writings';
+  const isDarkNavbar = location.pathname === '/about' || location.pathname.startsWith('/portfolio/') || (location.pathname === '/writings' || location.pathname === '/writing');
 
   useEffect(() => {
     if (isAdminPath) return;
@@ -66,7 +66,8 @@ function App() {
         <Route path="/about" element={<motion.div key="about" variants={pageVariants} initial="initial" animate="animate" exit="exit"><AboutPage /></motion.div>} />
         <Route path="/portfolio" element={<motion.div key="portfolio" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WorkPage /></motion.div>} />
         <Route path="/portfolio/:slug" element={<motion.div key="project-detail" variants={pageVariants} initial="initial" animate="animate" exit="exit"><ProjectDetailPage /></motion.div>} />
-        <Route path="/writings" element={<motion.div key="writings" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingsPage /></motion.div>} />
+        <Route path="/writing" element={<motion.div key="writing" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingPage /></motion.div>} />
+        <Route path="/writings" element={<motion.div key="writings" variants={pageVariants} initial="initial" animate="animate" exit="exit"><WritingPage /></motion.div>} />
       </Routes>
     </AnimatePresence>
   </div>;
