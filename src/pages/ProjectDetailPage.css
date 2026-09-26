@@ -126,3 +126,6 @@
   padding: 0px;
 }
 }
+
+.project-background-video-embed,
+.project-inline-video-embed { border: 0; background: #000; }
