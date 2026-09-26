@@ -77,7 +77,7 @@ function ProjectMedia({ project }) {
           if (isExternalVideoUrl(raw)) setUseEmbed(true);
         }}
       >
-        {isVisible && <source src={directUrl} type="video/mp4" />}
+        {isVisible && <source src={directUrl} />}
         Your browser does not support the video tag.
       </video>
     </div>
