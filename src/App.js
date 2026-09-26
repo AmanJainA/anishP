@@ -25,34 +25,67 @@ function App() {
 
   useEffect(() => {
     if (isAdminPath) return;
+
+    // A first-party cookie gives this browser a stable anonymous visitor name.
+    // We cannot read a person's Chrome/Google profile identity from a website.
+    const getCookie = name => {
+      const prefix = name + '=';
+      const item = document.cookie.split('; ').find(row => row.startsWith(prefix));
+      return item ? decodeURIComponent(item.slice(prefix.length)) : '';
+    };
+
+    const createVisitorName = () => {
+      const id = (window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now()
+      ).replace(/-/g, '').slice(0, 12).toUpperCase();
+      return `Visitor-${id}`;
+    };
+
     const getVisitorName = () => {
       try {
-        const key = 'anish_portfolio_visitor_name';
-        let name = localStorage.getItem(key);
+        const cookieKey = 'anish_portfolio_visitor_name';
+        let name = getCookie(cookieKey);
+
+        // Migrate an older localStorage visitor name into the cookie once.
         if (!name) {
-          const id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now()).replace(/-/g,'').slice(0,8).toUpperCase();
-          name = `Visitor-${id}`;
-          localStorage.setItem(key, name);
+          name = localStorage.getItem(cookieKey) || '';
         }
+
+        if (!name) name = createVisitorName();
+
+        document.cookie =
+          cookieKey + '=' + encodeURIComponent(name) +
+          '; Max-Age=63072000; Path=/; SameSite=Lax';
+
+        localStorage.setItem(cookieKey, name);
         return name;
       } catch (_) {
         return 'Visitor-Anonymous';
       }
     };
+
     const visitorName = getVisitorName();
     const sendVisit = (extra={}) => fetch(`${SUPABASE_URL}/functions/v1/track-visit`, {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
-      body:JSON.stringify({ path:window.location.pathname.replace(/^\\/anishP/, ''), username:visitorName, ...extra }),
+      body:JSON.stringify({
+        path:window.location.pathname.replace(/^\\/anishP/, ''),
+        username:visitorName,
+        ...extra
+      }),
       keepalive:true
     }).catch(() => {});
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         p => sendVisit({lat:p.coords.latitude, lon:p.coords.longitude}),
         () => sendVisit(),
         { enableHighAccuracy:false, timeout:4000, maximumAge:300000 }
       );
-    } else sendVisit();
+    } else {
+      sendVisit();
+    }
   }, [location.pathname, isAdminPath]);
 
   // Start every menu/page navigation from the top of the page.
