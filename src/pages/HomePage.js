@@ -3,7 +3,7 @@ import TitlePage from '../components/TitlePage';
 import ProjectsSection from '../components/ProjectsSection';
 import TextRevealSection from '../components/TextRevealSection';
 import Footer from '../components/Footer';
-import { getProjects } from '../data/projects';
+import { getProjects } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
