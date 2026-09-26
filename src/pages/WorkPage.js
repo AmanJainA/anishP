@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ProjectsSection from '../components/ProjectsSection';
 import Footer from '../components/Footer';
 import './WorkPage.css';
-import { getProjects } from '../data/projects';
+import { getProjects } from '../lib/supabase';
 
 function WorkPage() {
   const [projects, setProjects] = useState([]);
