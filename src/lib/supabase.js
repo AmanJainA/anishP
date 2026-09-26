@@ -12,7 +12,7 @@ async function request(table, params = '') {
 
 export const isExternalVideoUrl = value => /^https?:\/\//i.test(String(value || '').trim());
 
-export const isGoogleDriveVideoUrl = value => /drive\.google\.com/i.test(String(value || ''));
+export const isGoogleDriveVideoUrl = value => {\n  const raw = String(value || '').trim();\n  return /drive\\.google\\.com/i.test(raw) || /^[A-Za-z0-9_-]{20,100}$/.test(raw);\n};
 
 export const getGoogleDriveFileId = value => {
   const raw = String(value || '').trim();
