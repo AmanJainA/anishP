@@ -162,61 +162,14 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      // Dashboard cards use row counts from visits_activity.
-      // Equivalent SQL:
-      //   SELECT COUNT(id) FROM visits_activity;
-      //   SELECT COUNT(id) FROM visits_activity
-      //   WHERE daily_visit_date = CURRENT_DATE;
-      const totalRes = await fetch(`${SUPABASE_URL}/rest/v1/visits_activity?select=id`, {
-        method: "GET",
-        headers: {
-          apikey: SERVICE_KEY,
-          "Content-Profile": SCHEMA,
-          "Accept-Profile": SCHEMA,
-          Prefer: "count=exact",
-          Range: "0-0",
-        },
-      });
-      if (!totalRes.ok) {
-        const text = await totalRes.text();
-        throw new Error(text || `DB error ${totalRes.status}`);
-      }
-      const totalRange = totalRes.headers.get("content-range") || "";
-      const totalMatch = totalRange.match(/\/([0-9]+)$/);
-      const totalCount = totalMatch ? Number(totalMatch[1]) : 0;
-
-      const today = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date());
-
-      const todayRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/visits_activity?select=id&daily_visit_date=eq.${encodeURIComponent(today)}`,
-        {
-          method: "GET",
-          headers: {
-            apikey: SERVICE_KEY,
-            "Content-Profile": SCHEMA,
-            "Accept-Profile": SCHEMA,
-            Prefer: "count=exact",
-            Range: "0-0",
-          },
-        }
-      );
-      if (!todayRes.ok) {
-        const text = await todayRes.text();
-        throw new Error(text || `DB error ${todayRes.status}`);
-      }
-      const todayRange = todayRes.headers.get("content-range") || "";
-      const todayMatch = todayRange.match(/\/([0-9]+)$/);
-      const todayCount = todayMatch ? Number(todayMatch[1]) : 0;
-
+      // Dashboard cards use the database function so the React dashboard
+      // receives the exact row counts from visits_activity.
+      const rows = await dbRpc("rpc/get_visit_stats");
+      const stats = Array.isArray(rows) ? rows[0] : rows;
       return json({
-        total_count: totalCount,
-        today_count: todayCount,
-        today_date: today,
+        total_count: Number(stats?.total || 0),
+        today_count: Number(stats?.today || 0),
+        today_date: stats?.today_date || null,
       });
     }
     return json({error:"Unknown action"},400);
