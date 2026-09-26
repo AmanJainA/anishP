@@ -70,7 +70,7 @@ function App() {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
       body:JSON.stringify({
-        path:window.location.pathname.replace(/^\\/anishP/, ''),
+        path:window.location.pathname.replace(/^\/anishP/, ''),
         username:visitorName,
         ...extra
       }),
