@@ -57,6 +57,7 @@ function ProjectMedia({ project }) {
             title={project.title || 'Project video'}
             className="project-video project-video-embed"
             allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            controlsList="nodownload noplaybackrate"
             allowFullScreen
             loading="lazy"
           />
@@ -79,6 +80,7 @@ function ProjectMedia({ project }) {
       <video
         ref={videoRef}
         autoPlay={isVisible}
+        controls={false}
         loop
         muted
         playsInline
