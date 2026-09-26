@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {adminCreate,adminDelete,adminList,adminLogin,adminLogout,adminUpdate,adminVisits,isAdminLoggedIn} from '../lib/adminApi';
+import {adminCreate,adminDelete,adminList,adminLogin,adminLogout,adminUpdate,adminVisits,adminVisitStats,isAdminLoggedIn} from '../lib/adminApi';
 import './AdminPage.css';
 
 const forms={blog:{slug:'',title:'',content:'',sort_order:0},project:{title:'',slug:'',category:'',video_src:'',is_external_link:false,has_blob:false,show_carousel:true,is_vertical:false,description:'',sort_order:0},writing:{external_id:'',title:'',url:'',sort_order:0}};
