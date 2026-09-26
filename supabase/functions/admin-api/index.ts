@@ -167,12 +167,6 @@ Deno.serve(async (req:Request) => {
       //   SELECT COUNT(id) FROM visits_activity;
       //   SELECT COUNT(id) FROM visits_activity
       //   WHERE daily_visit_date = CURRENT_DATE;
-      const totalResult = await db(
-        "visits_activity?select=id&order=id.asc",
-        { headers: { Prefer: "count=exact", Range: "0-0" } }
-      );
-      void totalResult;
-
       const totalRes = await fetch(`${SUPABASE_URL}/rest/v1/visits_activity?select=id`, {
         method: "GET",
         headers: {
