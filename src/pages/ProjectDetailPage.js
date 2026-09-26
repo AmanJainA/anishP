@@ -34,7 +34,7 @@ function ProjectDetailPage() {
   return (<div className="project-detail-page">
     <div className="project-detail-content">
       <div className="project-header-section black-background-section"><h1 className="project-detail-title">{project.title}</h1><p className="project-detail-category">{project.category}</p></div>
-      {!project.isVertical && <div className="project-background-video-container"><video autoPlay controls loop muted playsInline className="project-background-video" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
+      {!project.isVertical && <div className="project-background-video-container"><video autoPlay controls={false} loop muted playsInline className="project-background-video" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
           <source src={getVideoUrl(project.videoSrc)} />
           Your browser does not support the video tag.
         </video></div>}
@@ -42,7 +42,7 @@ function ProjectDetailPage() {
       {!project.isVertical ? (project.showCarousel !== false && <div className="image-slideshow-container">
         {imageUrls.length > 0 && <img src={imageUrls[currentImageIndex]} alt={`${project.title} image ${currentImageIndex+1}`} className="project-image" onError={e => { e.currentTarget.style.display='none'; }} />}
         {imageUrls.length > 1 && <div className="slideshow-nav"><button onClick={prevImage} className="nav-button">&#10094;</button><button onClick={nextImage} className="nav-button">&#10095;</button></div>}
-      </div>) : <div className="project-inline-video-container"><video controls autoPlay loop muted playsInline className="project-inline-video">
+      </div>) : <div className="project-inline-video-container"><video controls={false} autoPlay loop muted playsInline className="project-inline-video">
           <source src={getVideoUrl(project.videoSrc)} />
           Your browser does not support the video tag.
         </video></div>}
