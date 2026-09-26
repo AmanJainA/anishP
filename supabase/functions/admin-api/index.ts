@@ -182,7 +182,7 @@ Deno.serve(async (req:Request) => {
         throw new Error(text || `DB error ${totalRes.status}`);
       }
       const totalRange = totalRes.headers.get("content-range") || "";
-      const totalMatch = totalRange.match(/\\/([0-9]+)$/);
+      const totalMatch = totalRange.match(/\/([0-9]+)$/);
       const totalCount = totalMatch ? Number(totalMatch[1]) : 0;
 
       const today = new Intl.DateTimeFormat("en-CA", {
@@ -210,7 +210,7 @@ Deno.serve(async (req:Request) => {
         throw new Error(text || `DB error ${todayRes.status}`);
       }
       const todayRange = todayRes.headers.get("content-range") || "";
-      const todayMatch = todayRange.match(/\\/([0-9]+)$/);
+      const todayMatch = todayRange.match(/\/([0-9]+)$/);
       const todayCount = todayMatch ? Number(todayMatch[1]) : 0;
 
       return json({
