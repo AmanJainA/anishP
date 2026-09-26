@@ -26,7 +26,7 @@ function Navbar({ isDark }) {
       <nav className="main-nav">
         <Link to="/about">ABOUT</Link>
         <Link to="/portfolio">PORTFOLIO</Link>
-        <Link to="/writings">WRITINGS</Link>
+        <Link to="/writing">WRITING</Link>
         <a href="#contact">CONTACT</a>
       </nav>
     </motion.header>
