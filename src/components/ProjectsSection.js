@@ -8,7 +8,8 @@ function ProjectMedia({ project }) {
   const frameRef = useRef(null);
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));\n  const [videoReady, setVideoReady] = useState(false);
+  const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     const node = frameRef.current;
@@ -26,8 +27,19 @@ function ProjectMedia({ project }) {
   useEffect(() => {
     if (!isVisible && videoRef.current) {
       videoRef.current.pause();
+      return undefined;
     }
-  }, [isVisible]);
+
+    // Some Google Drive files return a download/confirmation response
+    // instead of a native media stream. Fall back to the Drive preview
+    // player if native playback does not become ready within 8 seconds.
+    if (isVisible && isGoogleDriveVideoUrl(raw) && !videoReady && !useEmbed) {
+      const timer = window.setTimeout(() => setUseEmbed(true), 8000);
+      return () => window.clearTimeout(timer);
+    }
+
+    return undefined;
+  }, [isVisible, raw, videoReady, useEmbed]);
 
   if (!raw) {
     return <div ref={frameRef} className="project-video project-video-empty" aria-hidden="true" />;
@@ -73,6 +85,8 @@ function ProjectMedia({ project }) {
         className="project-video"
         preload={isVisible ? 'metadata' : 'none'}
         poster={getVideoPoster(raw)}
+        onLoadedMetadata={() => setVideoReady(true)}
+        onCanPlay={() => setVideoReady(true)}
         onError={() => {
           if (isExternalVideoUrl(raw)) setUseEmbed(true);
         }}
