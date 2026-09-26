@@ -52,7 +52,7 @@ export const isDirectVideoUrl = value => {
   if (!isExternalVideoUrl(raw)) return true;
   try {
     const pathname = new URL(raw).pathname.toLowerCase();
-    return /\\.(mp4|webm|ogg|ogv|mov|m4v)(?:$|\\/)/i.test(pathname);
+    return /\.(mp4|webm|ogg|ogv|mov|m4v)(?:$|\/)/i.test(pathname);
   } catch {
     return false;
   }
