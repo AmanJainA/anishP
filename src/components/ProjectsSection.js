@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
 import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl } from '../lib/supabase';
 
 function ProjectMedia({ project }) {
   const raw = String(project.videoSrc || '').trim();
+  const frameRef = useRef(null);
+  const videoRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
 
+  useEffect(() => {
+    const node = frameRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      entries => setIsVisible(entries.some(entry => entry.isIntersecting)),
+      { rootMargin: '500px 0px', threshold: 0.01 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [isVisible]);
+
   if (!raw) {
-    return <div className="project-video project-video-empty" aria-hidden="true" />;
+    return <div ref={frameRef} className="project-video project-video-empty" aria-hidden="true" />;
   }
 
   const directUrl = getVideoUrl(raw);
@@ -16,15 +38,17 @@ function ProjectMedia({ project }) {
 
   if (useEmbed) {
     return (
-      <div className="project-video-frame">
-        <iframe
-          src={embedUrl}
-          title={project.title || 'Project video'}
-          className="project-video project-video-embed"
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          allowFullScreen
-          loading="lazy"
-        />
+      <div ref={frameRef} className="project-video-frame">
+        {isVisible && (
+          <iframe
+            src={embedUrl}
+            title={project.title || 'Project video'}
+            className="project-video project-video-embed"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            allowFullScreen
+            loading="lazy"
+          />
+        )}
         <a
           href={raw}
           target="_blank"
@@ -39,26 +63,28 @@ function ProjectMedia({ project }) {
   }
 
   return (
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      className="project-video"
-      preload="metadata"
-      poster={getVideoPoster(raw)}
-      onError={() => {
-        if (isExternalVideoUrl(raw)) setUseEmbed(true);
-      }}
-    >
-      <source src={directUrl} />
-      Your browser does not support the video tag.
-    </video>
+    <div ref={frameRef} className="project-video-frame">
+      <video
+        ref={videoRef}
+        autoPlay={isVisible}
+        loop
+        muted
+        playsInline
+        className="project-video"
+        preload={isVisible ? 'metadata' : 'none'}
+        poster={getVideoPoster(raw)}
+        onError={() => {
+          if (isExternalVideoUrl(raw)) setUseEmbed(true);
+        }}
+      >
+        {isVisible && <source src={directUrl} type="video/mp4" />}
+        Your browser does not support the video tag.
+      </video>
+    </div>
   );
 }
 
 function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO", headerParagraph = "I TRIED NOT DOING FILMMAKING, AND I HATED EVERY BIT OF IT. YOU'RE IN GOOD HANDS." }) {
-
   const verticalProjects = projects.filter(p => p.isVertical);
   const nonVerticalProjects = projects.filter(p => !p.isVertical);
 
@@ -93,8 +119,8 @@ function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO"
       <div className="project-cards-list">
         {orderedProjects.map((project, index) => (
           <motion.a
-            key={index}
-            href={`/portofolio/${project.slug}`}
+            key={project.id || project.slug || index}
+            href={`/portfolio/${project.slug}`}
             className={`project-card ${project.isVertical ? 'vertical' : ''}`}
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
