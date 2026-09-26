@@ -4,7 +4,7 @@ import TextRevealSection from '../components/TextRevealSection';
 import Footer from '../components/Footer';
 import { getProjectBySlug } from '../lib/supabase';
 import './ProjectDetailPage.css';
-import { getVideoPoster, getVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl, getVideoEmbedUrl, isDirectVideoUrl } from '../lib/supabase';
 
 function ProjectDetailPage() {
   const { slug } = useParams();
@@ -34,18 +34,30 @@ function ProjectDetailPage() {
   return (<div className="project-detail-page">
     <div className="project-detail-content">
       <div className="project-header-section black-background-section"><h1 className="project-detail-title">{project.title}</h1><p className="project-detail-category">{project.category}</p></div>
-      {!project.isVertical && <div className="project-background-video-container"><video autoPlay controls={false} loop muted playsInline className="project-background-video" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
-          <source src={getVideoUrl(project.videoSrc)} />
-          Your browser does not support the video tag.
-        </video></div>}
+      {!project.isVertical && <div className="project-background-video-container">
+        {isDirectVideoUrl(project.videoSrc) ? (
+          <video autoPlay controls={false} loop muted playsInline className="project-background-video" preload="auto" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
+            <source src={getVideoUrl(project.videoSrc)} />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <iframe src={getVideoEmbedUrl(project.videoSrc)} title={project.title || 'Project video'} className="project-background-video project-background-video-embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen />
+        )}
+      </div>}
       <TextRevealSection text={project.description} />
       {!project.isVertical ? (project.showCarousel !== false && <div className="image-slideshow-container">
         {imageUrls.length > 0 && <img src={imageUrls[currentImageIndex]} alt={`${project.title} image ${currentImageIndex+1}`} className="project-image" onError={e => { e.currentTarget.style.display='none'; }} />}
         {imageUrls.length > 1 && <div className="slideshow-nav"><button onClick={prevImage} className="nav-button">&#10094;</button><button onClick={nextImage} className="nav-button">&#10095;</button></div>}
-      </div>) : <div className="project-inline-video-container"><video controls={false} autoPlay loop muted playsInline className="project-inline-video">
-          <source src={getVideoUrl(project.videoSrc)} />
-          Your browser does not support the video tag.
-        </video></div>}
+      </div>) : <div className="project-inline-video-container">
+        {isDirectVideoUrl(project.videoSrc) ? (
+          <video controls={false} autoPlay loop muted playsInline className="project-inline-video" preload="auto">
+            <source src={getVideoUrl(project.videoSrc)} />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <iframe src={getVideoEmbedUrl(project.videoSrc)} title={project.title || 'Project video'} className="project-inline-video project-inline-video-embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen />
+        )}
+      </div>}
     </div>
     <Footer />
   </div>);
