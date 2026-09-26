@@ -42,6 +42,51 @@ export const getVideoUrl = value => {
   return isExternalVideoUrl(raw) ? raw : `${raw}.mp4`;
 };
 
+// A URL can be either a real video file/stream or a normal web/share page.
+// Native <video> can only play the former. This helper is intentionally
+// extension-based so existing direct MP4/WebM/MOV links keep working.
+export const isDirectVideoUrl = value => {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  if (isGoogleDriveVideoUrl(raw)) return true;
+  if (!isExternalVideoUrl(raw)) return true;
+  try {
+    const pathname = new URL(raw).pathname.toLowerCase();
+    return /\\.(mp4|webm|ogg|ogv|mov|m4v)(?:$|\\/)/i.test(pathname);
+  } catch {
+    return false;
+  }
+};
+
+export const getVideoEmbedUrl = value => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
+
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^www\\./, '');
+
+    // Convert common video-platform share URLs into their embeddable form.
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const id = url.searchParams.get('v');
+      return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : raw;
+    }
+    if (host === 'youtu.be') {
+      const id = url.pathname.split('/').filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : raw;
+    }
+    if (host === 'vimeo.com') {
+      const id = url.pathname.split('/').filter(Boolean).pop();
+      return id ? `https://player.vimeo.com/video/${id}?autoplay=1&muted=1` : raw;
+    }
+  } catch {
+    // Fall through to the original URL.
+  }
+
+  return raw;
+};
+
 export const getVideoPoster = value => {
   const raw = String(value || '').trim();
   return isExternalVideoUrl(raw) ? undefined : `${raw}.webp`;
