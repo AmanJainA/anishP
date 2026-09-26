@@ -177,19 +177,19 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      const now = new Date();
-      const indiaFormatter = new Intl.DateTimeFormat("en-CA", {
+      const today = new Intl.DateTimeFormat("en-CA", {
         timeZone:"Asia/Kolkata",
         year:"numeric",
         month:"2-digit",
         day:"2-digit"
-      });
-      const today = indiaFormatter.format(now);
-      const start = new Date(`${today}T00:00:00+05:30`);
-      const end = new Date(start.getTime()+24*60*60*1000);
+      }).format(new Date());
+
+      // Total Visits = SELECT COUNT(id) FROM visits_activity
+      // Today's Visits = SELECT COUNT(id) FROM visits_activity
+      // WHERE daily_visit_date = today's India date
       const [total,todayCount] = await Promise.all([
         dbCount("visits_activity?select=id"),
-        dbCount(`visits_activity?select=id&visited_at=gte.${encodeURIComponent(start.toISOString())}&visited_at=lt.${encodeURIComponent(end.toISOString())}`)
+        dbCount(`visits_activity?select=id&daily_visit_date=eq.${encodeURIComponent(today)}`)
       ]);
       return json({total,today:todayCount,date:today});
     }
