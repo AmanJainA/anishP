@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {adminCreate,adminDelete,adminList,adminLogin,adminLogout,adminUpdate,adminVisits,isAdminLoggedIn} from '../lib/adminApi';
+import {adminCreate,adminDelete,adminList,adminLogin,adminLogout,adminUpdate,adminVisits,adminVisitStats,isAdminLoggedIn} from '../lib/adminApi';
 import './AdminPage.css';
 
 const forms={blog:{slug:'',title:'',content:'',sort_order:0},project:{title:'',slug:'',category:'',video_src:'',is_external_link:false,has_blob:false,show_carousel:true,is_vertical:false,description:'',sort_order:0},writing:{external_id:'',title:'',url:'',sort_order:0}};
@@ -28,10 +28,10 @@ function Dashboard({stats,monthly,recent,go}) {
 }
 
 export default function AdminPage(){
- const[logged,setLogged]=useState(isAdminLoggedIn()),[email,setEmail]=useState('admin@anish.com'),[password,setPassword]=useState(''),[err,setErr]=useState(''),[active,setActive]=useState('dashboard'),[rows,setRows]=useState([]),[q,setQ]=useState(''),[limit,setLimit]=useState(10),[pg,setPg]=useState(1),[edit,setEdit]=useState(null),[form,setForm]=useState(forms.blog),[loading,setLoading]=useState(false),[msg,setMsg]=useState(''),[dashboard,setDashboard]=useState({visits:[],projects:[],blogs:[],writings:[]}),[locationNames,setLocationNames]=useState({});
+ const[logged,setLogged]=useState(isAdminLoggedIn()),[email,setEmail]=useState('admin@anish.com'),[password,setPassword]=useState(''),[err,setErr]=useState(''),[active,setActive]=useState('dashboard'),[rows,setRows]=useState([]),[q,setQ]=useState(''),[limit,setLimit]=useState(10),[pg,setPg]=useState(1),[edit,setEdit]=useState(null),[form,setForm]=useState(forms.blog),[loading,setLoading]=useState(false),[msg,setMsg]=useState(''),[dashboard,setDashboard]=useState({visits:[],projects:[],blogs:[],writings:[],visitStats:{total:0,today:0}}),[locationNames,setLocationNames]=useState({});
 
  const crud=active!=='visits'&&active!=='dashboard';
- const loadDashboard=async()=>{setLoading(true);try{const [v,p,b,w]=await Promise.all([adminVisits(),adminList('project'),adminList('blog'),adminList('writing')]);setDashboard({visits:v.rows||[],projects:p.rows||[],blogs:b.rows||[],writings:w.rows||[]});}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
+ const loadDashboard=async()=>{setLoading(true);try{const [v,s,p,b,w]=await Promise.all([adminVisits(),adminVisitStats(),adminList('project'),adminList('blog'),adminList('writing')]);setDashboard({visits:v.rows||[],visitStats:{total:Number(s.total||0),today:Number(s.today||0)},projects:p.rows||[],blogs:b.rows||[],writings:w.rows||[]});}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
  const load=async()=>{if(active==='dashboard'){await loadDashboard();return}setLoading(true);try{const d=active==='visits'?await adminVisits():await adminList(active);setRows(d.rows||[]);setPg(1)}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
  useEffect(()=>{if(logged){setEdit(null);if(active==='project'||active==='blog'||active==='writing')setForm({...forms[active]});load()}},[logged,active]);
 
@@ -41,7 +41,7 @@ export default function AdminPage(){
  const locationKey=r=>{const raw=String(r?.location??'').trim();if(!raw)return '';const m=raw.match(/(-?\d+(?:\.\d+)?)\s*[, ]+\s*(-?\d+(?:\.\d+)?)/);return m?m[1]+','+m[2]:''};
  useEffect(()=>{if(active!=='visits')return;const pending=[...new Set(rows.map(locationKey).filter(k=>k&&!locationNames[k]))];if(!pending.length)return;let cancelled=false;(async()=>{for(const key of pending){try{const parts=key.split(',');const res=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+encodeURIComponent(parts[0])+'&lon='+encodeURIComponent(parts[1])+'&zoom=10&addressdetails=1',{headers:{Accept:'application/json'}});if(!res.ok)continue;const d=await res.json();const a=d.address||{};const label=[a.city||a.town||a.village||a.municipality||a.county,a.state,a.country].filter(Boolean).join(', ');if(!cancelled)setLocationNames(prev=>({...prev,[key]:label||d.display_name||key}));}catch(_){if(!cancelled)setLocationNames(prev=>({...prev,[key]:key}))}}})();return()=>{cancelled=true}},[active,rows]);
  const displayLocation=r=>{const raw=String(r?.location??'').trim();if(!raw)return '—';const key=locationKey(r);return key?(locationNames[key]||'Loading location…'):raw};
- const stats={visits:dashboard.visits.length,today:dashboard.visits.filter(v=>{const visitedDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v.visited_at));return visitedDate===todayKey}).length,projects:dashboard.projects.length,blogs:dashboard.blogs.length,writings:dashboard.writings.length,refresh:loadDashboard};
+ const stats={visits:dashboard.visitStats.total,today:dashboard.visitStats.today,projects:dashboard.projects.length,blogs:dashboard.blogs.length,writings:dashboard.writings.length,refresh:loadDashboard};
  const filtered=useMemo(()=>{const x=q.trim().toLowerCase();return x?rows.filter(r=>Object.values(r).some(v=>String(v??'').toLowerCase().includes(x))):rows},[rows,q]);
  const shown=filtered.slice((pg-1)*limit,pg*limit), pages=Math.max(1,Math.ceil(filtered.length/limit));
  const login=async e=>{e.preventDefault();setErr('');try{await adminLogin(email,password);setLogged(true);setPassword('')}catch(e){setErr(e.message)}};
