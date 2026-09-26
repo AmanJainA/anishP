@@ -25,20 +25,26 @@ function ProjectMedia({ project }) {
   }, []);
 
   useEffect(() => {
-    if (!isVisible && videoRef.current) {
-      videoRef.current.pause();
-      return undefined;
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (!isVisible) {
+      video.pause();
+      return;
     }
 
-    // Some Google Drive files return a download/confirmation response
-    // instead of a native media stream. Fall back to the Drive preview
-    // player if native playback does not become ready within 8 seconds.
-    if (isVisible && isGoogleDriveVideoUrl(raw) && !videoReady && !useEmbed) {
+    // Start muted inline playback automatically as soon as the card is visible.
+    video.muted = true;
+    video.setAttribute('muted', '');
+    const playPromise = video.play();
+    if (playPromise?.catch) playPromise.catch(() => {});
+
+    // Google Drive may return a non-native response. Fall back to its
+    // preview player if native playback does not become ready.
+    if (isGoogleDriveVideoUrl(raw) && !videoReady && !useEmbed) {
       const timer = window.setTimeout(() => setUseEmbed(true), 8000);
       return () => window.clearTimeout(timer);
     }
-
-    return undefined;
   }, [isVisible, raw, videoReady, useEmbed]);
 
   if (!raw) {
@@ -62,15 +68,6 @@ function ProjectMedia({ project }) {
             loading="lazy"
           />
         )}
-        <a
-          href={raw}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="project-video-open-link"
-          onClick={event => event.stopPropagation()}
-        >
-          Open video
-        </a>
       </div>
     );
   }
@@ -79,7 +76,7 @@ function ProjectMedia({ project }) {
     <div ref={frameRef} className="project-video-frame">
       <video
         ref={videoRef}
-        autoPlay={isVisible}
+        autoPlay
         controls={false}
         loop
         muted
