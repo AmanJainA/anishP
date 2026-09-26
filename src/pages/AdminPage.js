@@ -1,0 +1,88 @@
+import React,{useEffect,useMemo,useState} from 'react';
+import {adminCreate,adminDelete,adminList,adminLogin,adminLogout,adminUpdate,adminVisits,isAdminLoggedIn} from '../lib/adminApi';
+import './AdminPage.css';
+
+const forms={blog:{slug:'',title:'',content:'',sort_order:0},project:{title:'',slug:'',category:'',video_src:'',is_external_link:false,has_blob:false,show_carousel:true,is_vertical:false,description:'',sort_order:0},writing:{external_id:'',title:'',url:'',sort_order:0}};
+const projectFields=['title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order'];
+const cols={blog:['id','slug','title','content','sort_order','created_at','updated_at'],project:['id','title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order','created_at','updated_at'],writing:['id','external_id','title','url','sort_order','created_at','updated_at'],visits:['id','username','email','os','browser','ip_address','location','macaddress','path','referrer','visit_count','daily_visit_count','daily_visit_date','visited_at']};
+const names={blog:'Blogs',project:'Projects',writing:'Writings',visits:'Visits'};
+const pretty=k=>k.replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());
+const locationCache=new Map();
+function LocationCell({value}){
+ const [name,setName]=useState('');
+ useEffect(()=>{
+  const raw=String(value??'').trim();
+  const m=raw.match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/);
+  if(!m){setName(raw);return;}
+  const key=`${m[1]},${m[2]}`;
+  if(locationCache.has(key)){setName(locationCache.get(key));return;}
+  let cancelled=false;
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(m[1])}&lon=${encodeURIComponent(m[2])}&zoom=18&addressdetails=1`)
+   .then(r=>r.ok?r.json():null).then(d=>{if(cancelled)return;const n=d?.display_name||`${m[1]}, ${m[2]}`;locationCache.set(key,n);setName(n)}).catch(()=>{if(!cancelled)setName(`${m[1]}, ${m[2]}`)});
+  return()=>{cancelled=true};
+ },[value]);
+ const raw=String(value??'').trim();
+ const m=raw.match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/);
+ if(!m)return <span>{raw}</span>;
+ const mapUrl=`https://www.google.com/maps?q=${encodeURIComponent(m[1]+','+m[2])}`;
+ return <span className="visit-location"><a href={mapUrl} target="_blank" rel="noreferrer" title="Open in Google Maps">{name||'Finding location…'}</a><small>{m[1]}, {m[2]}</small></span>;
+}
+const menu=[['dashboard','Dashboard','⌂'],['project','Projects','▣'],['blog','Blogs','▤'],['writing','Writings','✎'],['visits','Visits','◉']];
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const loadScript=(src,globalName)=>new Promise((resolve,reject)=>{if(window[globalName])return resolve(window[globalName]);const existing=document.querySelector('script[data-admin-export="'+globalName+'"]');if(existing){existing.addEventListener('load',()=>resolve(window[globalName]));existing.addEventListener('error',()=>reject(new Error('Could not load '+globalName)));return}const s=document.createElement('script');s.src=src;s.async=true;s.dataset.adminExport=globalName;s.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error(globalName+' did not initialize'));s.onerror=()=>reject(new Error('Could not load '+globalName));document.head.appendChild(s)});
+
+function Dashboard({stats,monthly,recent,go}) {
+ return <div className="dashboard">
+  <div className="dashboard-welcome"><div><span className="admin-kicker">OVERVIEW</span><h2>Good to see you.</h2><p>Here is what is happening across your portfolio.</p></div><button className="refresh-btn" onClick={stats.refresh}>↻ Refresh</button></div>
+  <div className="stat-grid">
+   <button className="stat-card" onClick={()=>go('visits')}><span className="stat-icon">◉</span><span className="stat-label">Total Visits</span><strong>{stats.visits}</strong><small>All tracked visits</small></button><button className="stat-card today-stat" onClick={()=>go('visits')}><span className="stat-icon">◷</span><span className="stat-label">Today's Visits</span><strong>{stats.today}</strong><small>Visits today</small></button>
+   <button className="stat-card" onClick={()=>go('project')}><span className="stat-icon">▣</span><span className="stat-label">Projects</span><strong>{stats.projects}</strong><small>Published projects</small></button>
+   <button className="stat-card" onClick={()=>go('blog')}><span className="stat-icon">▤</span><span className="stat-label">Blogs</span><strong>{stats.blogs}</strong><small>Published articles</small></button>
+   <button className="stat-card" onClick={()=>go('writing')}><span className="stat-icon">✎</span><span className="stat-label">Writings</span><strong>{stats.writings}</strong><small>Writing links</small></button>
+  </div>
+  <div className="dashboard-grid">
+   <section className="dash-card traffic-card"><div className="dash-head"><div><h3>Monthly visitors</h3><p>Portfolio traffic by month</p></div></div><div className="traffic-chart">{monthly.map((m,i)=><div className="chart-col" key={m.key}><div className="chart-value">{m.count}</div><div className="chart-bar-track"><div className="chart-bar" style={{height:`${Math.max(6,(m.count/(Math.max(...monthly.map(x=>x.count),1)))*100)}%`}}/></div><span>{m.label}</span></div>)}</div></section>
+   <section className="dash-card"><div className="dash-head"><div><h3>Recently added projects</h3><p>Latest portfolio work</p></div><button className="text-btn" onClick={()=>go('project')}>View all →</button></div>{recent.length?<div className="recent-list">{recent.map(p=><button key={p.id} className="recent-item" onClick={()=>go('project')}><span className="recent-number">{String(p.id).padStart(2,'0')}</span><span><strong>{p.title||'Untitled project'}</strong><small>{p.category||'Project'} · {p.created_at?new Date(p.created_at).toLocaleDateString():''}</small></span><span>→</span></button>)}</div>:<div className="dash-empty">No projects yet.</div>}</section>
+  </div>
+ </div>
+}
+
+export default function AdminPage(){
+ const[logged,setLogged]=useState(isAdminLoggedIn()),[email,setEmail]=useState('admin@anish.com'),[password,setPassword]=useState(''),[err,setErr]=useState(''),[active,setActive]=useState('dashboard'),[rows,setRows]=useState([]),[q,setQ]=useState(''),[limit,setLimit]=useState(10),[pg,setPg]=useState(1),[edit,setEdit]=useState(null),[form,setForm]=useState(forms.blog),[loading,setLoading]=useState(false),[msg,setMsg]=useState(''),[dashboard,setDashboard]=useState({visits:[],projects:[],blogs:[],writings:[]});
+
+ const crud=active!=='visits'&&active!=='dashboard';
+ const loadDashboard=async()=>{setLoading(true);try{const [v,p,b,w]=await Promise.all([adminVisits(),adminList('project'),adminList('blog'),adminList('writing')]);setDashboard({visits:v.rows||[],projects:p.rows||[],blogs:b.rows||[],writings:w.rows||[]});}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
+ const load=async()=>{if(active==='dashboard'){await loadDashboard();return}setLoading(true);try{const d=active==='visits'?await adminVisits():await adminList(active);setRows(d.rows||[]);setPg(1)}catch(e){if(/Unauthorized/i.test(e.message)){setLogged(false);localStorage.removeItem('anish_admin_token')}setMsg(e.message)}finally{setLoading(false)}};
+ useEffect(()=>{if(logged){setEdit(null);if(active==='project'||active==='blog'||active==='writing')setForm({...forms[active]});load()}},[logged,active]);
+
+ const todayKey=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const monthly=useMemo(()=>{const now=new Date();const out=[];for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;out.push({key,label:d.toLocaleDateString('en-US',{month:'short'}),count:dashboard.visits.filter(v=>{const x=new Date(v.visited_at);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`===key}).length})}return out},[dashboard.visits]);
+ const recent=useMemo(()=>[...dashboard.projects].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5),[dashboard.projects]);
+ const stats={visits:dashboard.visits.reduce((sum,v)=>sum+Number(v.visit_count||1),0),today:dashboard.visits.reduce((sum,v)=>sum+(v.daily_visit_date===todayKey?Number(v.daily_visit_count||0):0),0),projects:dashboard.projects.length,blogs:dashboard.blogs.length,writings:dashboard.writings.length,refresh:loadDashboard};
+ const filtered=useMemo(()=>{const x=q.trim().toLowerCase();return x?rows.filter(r=>Object.values(r).some(v=>String(v??'').toLowerCase().includes(x))):rows},[rows,q]);
+ const shown=filtered.slice((pg-1)*limit,pg*limit), pages=Math.max(1,Math.ceil(filtered.length/limit));
+ const login=async e=>{e.preventDefault();setErr('');try{await adminLogin(email,password);setLogged(true);setPassword('')}catch(e){setErr(e.message)}};
+ const reset=()=>{setEdit(null);setForm({...forms[active]})};
+ const editRow=r=>{const f={...forms[active]};Object.keys(f).forEach(k=>f[k]=r[k]??f[k]);setEdit(r.id);setForm(f);window.scrollTo({top:0,behavior:'smooth'})};
+ const save=async e=>{e.preventDefault();setLoading(true);try{edit?await adminUpdate(active,edit,form):await adminCreate(active,form);setMsg(edit?'Updated successfully.':'Added successfully.');reset();await load()}catch(e){setMsg(e.message)}finally{setLoading(false)}};
+ const del=async id=>{if(!window.confirm('Delete this item?'))return;try{await adminDelete(active,id);setMsg('Deleted successfully.');await load()}catch(e){setMsg(e.message)}};
+ const exportData=filtered,name=`${active}-report`;
+ const copy=async()=>{const c=cols[active];await navigator.clipboard.writeText([c.join('\t'),...exportData.map(r=>c.map(k=>String(r[k]??'')).join('\t'))].join('\n'));setMsg('Filtered report copied.')};
+ const excel=async()=>{try{const XLSX=await loadScript('https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js','XLSX');const c=cols[active],d=exportData.map(r=>Object.fromEntries(c.map(k=>[pretty(k),r[k]??'']))),ws=XLSX.utils.json_to_sheet(d),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,names[active]);XLSX.writeFile(wb,name+'.xlsx')}catch(e){setMsg('Excel export failed: '+e.message)}};
+ const docx=async()=>{try{const D=await loadScript('https://unpkg.com/docx@8.5.0/build/index.js','docx');const {Document,Packer,Paragraph,Table:DocxTable,TableCell,TableRow,TextRun}=D;const c=cols[active],head=new TableRow({children:c.map(k=>new TableCell({children:[new Paragraph({children:[new TextRun({text:pretty(k),bold:true})]})]}))}),body=exportData.map(r=>new TableRow({children:c.map(k=>new TableCell({children:[new Paragraph(String(r[k]??''))]}))})),d=new Document({sections:[{children:[new Paragraph({text:names[active]+' Report',heading:'Heading1'}),new DocxTable({rows:[head,...body]})]}]});download(await Packer.toBlob(d),name+'.docx')}catch(e){setMsg('DOCX export failed: '+e.message)}};
+ const pdf=async()=>{try{const J=await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.2/jspdf.umd.min.js','jspdf');const jsPDF=J.jsPDF||J.default?.jsPDF;const c=cols[active],d=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'}),m=24,w=(d.internal.pageSize.getWidth()-48)/c.length;let y=40;d.setFontSize(14);d.text(names[active]+' Report',m,y);y+=22;d.setFontSize(7);const row=a=>{if(y>d.internal.pageSize.getHeight()-25){d.addPage();y=30}a.forEach((v,i)=>d.text(String(v??'').slice(0,30),m+i*w,y,{maxWidth:w-3}));y+=12};row(c.map(pretty));exportData.forEach(r=>row(c.map(k=>r[k])));d.save(name+'.pdf')}catch(e){setMsg('PDF export failed: '+e.message)}};
+
+ if(!logged)return <div className="admin-login-page"><form className="admin-login-card" onSubmit={login}><div className="admin-kicker">ANISH PORTFOLIO</div><h1>Admin Login</h1><p>Manage portfolio content and visit activity.</p><label>Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/></label>{err&&<div className="admin-error">{err}</div>}<button className="admin-primary">Login</button></form></div>;
+
+ return <div className="admin-shell">
+  <aside className="admin-sidebar"><div className="sidebar-brand"><div className="brand-mark">A</div><div><strong>ANISH</strong><span>PORTFOLIO</span></div></div><div className="sidebar-section">MENU</div><nav>{menu.map(([key,label,icon])=><button key={key} className={active===key?'active':''} onClick={()=>{setActive(key);setQ('');setEdit(null);setMsg('')}}><span className="menu-icon">{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="admin-user"><span className="user-avatar">A</span><span><strong>Administrator</strong><small>admin@anish.com</small></span></div><button className="logout-side" onClick={async()=>{await adminLogout();setLogged(false)}}>Logout</button></div></aside>
+  <div className="admin-content"><header className="admin-topbar"><div><div className="admin-kicker">ANISH PORTFOLIO / ADMIN</div><h1>{active==='dashboard'?'Dashboard':names[active]+' Management'}</h1></div><div className="topbar-right"><span className="status-dot"/>Live</div></header>
+   <main className="admin-main">
+    {active==='dashboard'?<Dashboard stats={stats} monthly={monthly} recent={recent} go={setActive}/>:<>
+     {crud&&<form className="admin-form" onSubmit={save}><div className="admin-form-head"><div><span className="section-eyebrow">{edit?'EDIT':'CREATE'}</span><h2>{edit?'Edit ':'Add '}{names[active].slice(0,-1)}</h2></div><button type="button" onClick={reset}>Clear</button></div><div className="admin-grid">{(active==='project'?projectFields:Object.keys(forms[active]||form)).map(k=>{const b=typeof (forms[active]?.[k] ?? form[k])==='boolean',a=k==='content'||k==='description';const v=form[k]??'';return <label key={k}>{pretty(k)}{b?<span className="check-field"><input type="checkbox" checked={!!v} onChange={e=>setForm({...form,[k]:e.target.checked})}/>{v?'Enabled':'Disabled'}</span>:a?<textarea rows="5" value={v} onChange={e=>setForm({...form,[k]:e.target.value})}/>:<input type={k==='sort_order'?'number':'text'} value={v} onChange={e=>setForm({...form,[k]:k==='sort_order'?Number(e.target.value):e.target.value})}/>}</label>})}</div><button className="admin-primary" disabled={loading}>{edit?'Update':'Add '+names[active].slice(0,-1)}</button></form>}
+     <section className="admin-report"><div className="admin-report-head"><div><span className="section-eyebrow">CONTENT</span><h2>{names[active]} Report</h2><span>{filtered.length} records</span></div><div className="admin-tools"><input className="admin-search" placeholder="Search..." value={q} onChange={e=>{setQ(e.target.value);setPg(1)}}/><select value={limit} onChange={e=>{setLimit(+e.target.value);setPg(1)}}><option>10</option><option>20</option><option>50</option><option>100</option></select><button onClick={copy}>Copy</button><button onClick={excel}>Excel</button><button onClick={docx}>DOCX</button><button onClick={pdf}>PDF</button></div></div>{msg&&<div className="admin-message">{msg}</div>}<div className="admin-table-wrap">{loading?<div className="admin-empty">Loading...</div>:<table><thead><tr>{cols[active].map(k=><th key={k}>{pretty(k)}</th>)}{crud&&<th>Actions</th>}</tr></thead><tbody>{shown.length?shown.map(r=><tr key={r.id}>{cols[active].map(k=><td key={k} title={String(r[k]??'')}>{active==='visits'&&k==='location'?<LocationCell value={r[k]}/>:String(r[k]??'')}</td>)}{crud&&<td className="admin-actions"><button onClick={()=>editRow(r)}>Edit</button><button className="danger" onClick={()=>del(r.id)}>Delete</button></td>}</tr>):<tr><td colSpan={cols[active].length+(crud?1:0)}><div className="admin-empty">No records found.</div></td></tr>}</tbody></table>}</div><div className="admin-pagination"><button disabled={pg<=1} onClick={()=>setPg(pg-1)}>Previous</button><span>Page {pg} of {pages}</span><button disabled={pg>=pages} onClick={()=>setPg(pg+1)}>Next</button></div></section>
+    </>}
+   </main>
+  </div>
+ </div>
+}
