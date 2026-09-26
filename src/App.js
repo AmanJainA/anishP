@@ -43,7 +43,7 @@ function App() {
     const sendVisit = (extra={}) => fetch(`${SUPABASE_URL}/functions/v1/track-visit`, {
       method:'POST',
       headers:{ apikey:SUPABASE_KEY, 'Content-Type':'application/json' },
-      body:JSON.stringify({ path:window.location.pathname.replace(/^\/anishP/, ''), username:visitorName, ...extra }),
+      body:JSON.stringify({ path:window.location.pathname.replace(/^\\/anishP/, ''), username:visitorName, ...extra }),
       keepalive:true
     }).catch(() => {});
     if (navigator.geolocation) {
@@ -54,6 +54,11 @@ function App() {
       );
     } else sendVisit();
   }, [location.pathname, isAdminPath]);
+
+  // Start every menu/page navigation from the top of the page.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
 
   if (isAdminPath) return <AdminPage />;
 
