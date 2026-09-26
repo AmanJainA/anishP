@@ -7,6 +7,13 @@ import './Navbar.css';
 function Navbar({ isDark }) {
   const scrollDirection = useScrollDirection();
 
+  const handleMenuClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <motion.header
       className={`main-header ${isDark ? 'dark-navbar' : ''}`}
@@ -21,12 +28,12 @@ function Navbar({ isDark }) {
       }}
     >
       <div className="main-logo">
-        <Link to="/">ANISH JAIN</Link>
+        <Link to="/" onClick={handleMenuClick}>ANISH JAIN</Link>
       </div>
       <nav className="main-nav">
-        <Link to="/about">ABOUT</Link>
-        <Link to="/portfolio">PORTFOLIO</Link>
-        <Link to="/writing">WRITING</Link>
+        <Link to="/about" onClick={handleMenuClick}>ABOUT</Link>
+        <Link to="/portfolio" onClick={handleMenuClick}>PORTFOLIO</Link>
+        <Link to="/writing" onClick={handleMenuClick}>WRITING</Link>
         <a href="#contact">CONTACT</a>
       </nav>
     </motion.header>
