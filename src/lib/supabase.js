@@ -10,85 +10,121 @@ async function request(table, params = '') {
   return response.json();
 }
 
-export const isExternalVideoUrl = value => /^https?:\/\//i.test(String(value || '').trim());
+const cleanVideoValue = value => String(value || '').trim();
 
-export const isGoogleDriveVideoUrl = value => {\n  const raw = String(value || '').trim();\n  return /drive\\.google\\.com/i.test(raw) || /^[A-Za-z0-9_-]{20,100}$/.test(raw);\n};
+export const isExternalVideoUrl = value => /^https?:\/\//i.test(cleanVideoValue(value));
+
+export const isGoogleDriveVideoUrl = value => {
+  const raw = cleanVideoValue(value);
+  return /(?:drive|docs)\.google\.com/i.test(raw) || /^[A-Za-z0-9_-]{20,100}$/.test(raw);
+};
 
 export const getGoogleDriveFileId = value => {
-  const raw = String(value || '').trim();
+  const raw = cleanVideoValue(value);
   const match = raw.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (match) return match[1];
+  if (match) return decodeURIComponent(match[1]);
+  const openMatch = raw.match(/(?:drive\.google\.com\/open|drive\.google\.com\/uc)[^#]*[?&]id=([^&#]+)/i);
+  if (openMatch) return decodeURIComponent(openMatch[1]);
   const id = raw.match(/[?&]id=([^&#]+)/i);
-  return id ? id[1] : '';
+  if (id) return decodeURIComponent(id[1]);
+  return /^[A-Za-z0-9_-]{20,100}$/.test(raw) ? raw : '';
 };
 
 export const getGoogleDrivePreviewUrl = value => {
   const id = getGoogleDriveFileId(value);
-  return id ? `https://drive.google.com/file/d/${id}/preview?autoplay=1` : String(value || '').trim();
+  return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1` : cleanVideoValue(value);
 };
 
-// Drive's public download endpoint is used as the native <video> source.
-// This keeps the portfolio on the browser's normal video element instead of
-// embedding Google's player UI.
 export const getGoogleDriveDirectUrl = value => {
   const id = getGoogleDriveFileId(value);
   return id ? `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}` : '';
 };
 
-export const getVideoUrl = value => {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
-  return isExternalVideoUrl(raw) ? raw : `${raw}.mp4`;
+const getYouTubeId = raw => {
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+      if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/')[2] || '';
+      if (url.pathname.startsWith('/embed/')) return url.pathname.split('/')[2] || '';
+      return url.searchParams.get('v') || '';
+    }
+  } catch {}
+  return '';
 };
 
-// A URL can be either a real video file/stream or a normal web/share page.
-// Native <video> can only play the former. This helper is intentionally
-// extension-based so existing direct MP4/WebM/MOV links keep working.
+const getVimeoId = raw => {
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+      const match = url.pathname.match(/(?:video\/)?(\d+)/);
+      return match ? match[1] : '';
+    }
+  } catch {}
+  return '';
+};
+
+export const getVideoUrl = value => {
+  const raw = cleanVideoValue(value);
+  if (!raw) return '';
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
+  return isExternalVideoUrl(raw) ? raw : (raw.endsWith('.mp4') ? raw : `${raw}.mp4`);
+};
+
 export const isDirectVideoUrl = value => {
-  const raw = String(value || '').trim();
+  const raw = cleanVideoValue(value);
   if (!raw) return false;
   if (isGoogleDriveVideoUrl(raw)) return true;
   if (!isExternalVideoUrl(raw)) return true;
   try {
-    const pathname = new URL(raw).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|ogv|mov|m4v)(?:$|\/)/i.test(pathname);
+    const url = new URL(raw);
+    const pathname = url.pathname.toLowerCase();
+    return /\.(mp4|webm|ogg|ogv|mov|m4v|avi|m3u8|mpd)(?:$|\/)/i.test(pathname);
   } catch {
     return false;
   }
 };
 
 export const getVideoEmbedUrl = value => {
-  const raw = String(value || '').trim();
+  const raw = cleanVideoValue(value);
   if (!raw) return '';
   if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
 
+  const youtubeId = getYouTubeId(raw);
+  if (youtubeId) return `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&mute=1&rel=0`;
+
+  const vimeoId = getVimeoId(raw);
+  if (vimeoId) return `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}?autoplay=1&muted=1`;
+
   try {
     const url = new URL(raw);
-    const host = url.hostname.toLowerCase().replace(/^www\\./, '');
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
 
-    // Convert common video-platform share URLs into their embeddable form.
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const id = url.searchParams.get('v');
-      return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : raw;
+    if (host === 'dailymotion.com' || host === 'dai.ly') {
+      const match = host === 'dai.ly'
+        ? url.pathname.split('/').filter(Boolean)[0]
+        : url.pathname.match(/\/video\/([^_/?#]+)/i)?.[1];
+      if (match) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(match)}?autoplay=1&mute=1`;
     }
-    if (host === 'youtu.be') {
-      const id = url.pathname.split('/').filter(Boolean)[0];
-      return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : raw;
+
+    if (host === 'loom.com') {
+      const id = url.pathname.match(/\/share\/([A-Za-z0-9]+)/i)?.[1] || url.pathname.match(/\/embed\/([A-Za-z0-9]+)/i)?.[1];
+      if (id) return `https://www.loom.com/embed/${id}?autoplay=1&muted=1`;
     }
-    if (host === 'vimeo.com') {
-      const id = url.pathname.split('/').filter(Boolean).pop();
-      return id ? `https://player.vimeo.com/video/${id}?autoplay=1&muted=1` : raw;
+
+    if (host === 'wistia.com' || host.endsWith('.wistia.com')) {
+      const id = url.pathname.match(/\/medias\/([A-Za-z0-9]+)/i)?.[1];
+      if (id) return `https://fast.wistia.net/embed/iframe/${id}?autoPlay=true&muted=true`;
     }
-  } catch {
-    // Fall through to the original URL.
-  }
+  } catch {}
 
   return raw;
 };
 
 export const getVideoPoster = value => {
-  const raw = String(value || '').trim();
+  const raw = cleanVideoValue(value);
   return isExternalVideoUrl(raw) ? undefined : `${raw}.webp`;
 };
 
