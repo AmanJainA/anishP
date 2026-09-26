@@ -41,27 +41,12 @@ async function db(path:string, init:RequestInit={}) {
   return data;
 }
 
-async function dbCount(path:string) {
-  if (!SERVICE_KEY) throw new Error("Server database key is not configured");
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method:"GET",
-    headers: {
-      apikey: SERVICE_KEY,
-      "Content-Profile": SCHEMA,
-      "Accept-Profile": SCHEMA,
-      "Prefer": "count=exact",
-      "Range": "0-0",
-    },
+async function dbRpc(path:string) {
+  return await db(path, {
+    method:"POST",
+    headers:{Prefer:"return=representation"},
+    body:"{}",
   });
-  const text = await res.text();
-  if (!res.ok) {
-    let data:any = null;
-    try { data = text ? JSON.parse(text) : null; } catch {}
-    throw new Error(data?.message || data?.error || text || `DB error ${res.status}`);
-  }
-  const contentRange = res.headers.get("content-range") || "";
-  const match = contentRange.match(/\/([0-9]+)$/);
-  return match ? Number(match[1]) : 0;
 }
 
 async function sha256(value:string) {
@@ -177,21 +162,17 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      const today = new Intl.DateTimeFormat("en-CA", {
-        timeZone:"Asia/Kolkata",
-        year:"numeric",
-        month:"2-digit",
-        day:"2-digit"
-      }).format(new Date());
-
-      // Total Visits = SELECT COUNT(id) FROM visits_activity
-      // Today's Visits = SELECT COUNT(id) FROM visits_activity
-      // WHERE daily_visit_date = today's India date
-      const [total,todayCount] = await Promise.all([
-        dbCount("visits_activity?select=id"),
-        dbCount(`visits_activity?select=id&daily_visit_date=eq.${encodeURIComponent(today)}`)
-      ]);
-      return json({total,today:todayCount,date:today});
+      // IMPORTANT: dashboard totals come only from SQL COUNT(id).
+      // Total:  SELECT COUNT(id) FROM visits_activity
+      // Today:  SELECT COUNT(id) FROM visits_activity
+      //         WHERE daily_visit_date = CURRENT_DATE
+      const result = await dbRpc("rpc/get_visit_stats");
+      const row = Array.isArray(result) ? result[0] : result;
+      return json({
+        total:Number(row?.total || 0),
+        today:Number(row?.today || 0),
+        date:String(row?.today_date || "")
+      });
     }
 
     return json({error:"Unknown action"},400);
