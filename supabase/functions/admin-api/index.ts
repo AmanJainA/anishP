@@ -162,19 +162,69 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      // IMPORTANT: dashboard totals come only from SQL COUNT(id).
-      // Total:  SELECT COUNT(id) FROM visits_activity
-      // Today:  SELECT COUNT(id) FROM visits_activity
-      //         WHERE daily_visit_date = CURRENT_DATE
-      const result = await dbRpc("rpc/get_visit_stats");
-      const row = Array.isArray(result) ? result[0] : result;
+      // Dashboard cards use row counts from visits_activity.
+      // Equivalent SQL:
+      //   SELECT COUNT(id) FROM visits_activity;
+      //   SELECT COUNT(id) FROM visits_activity
+      //   WHERE daily_visit_date = CURRENT_DATE;
+      const totalResult = await db(
+        "visits_activity?select=id&order=id.asc",
+        { headers: { Prefer: "count=exact", Range: "0-0" } }
+      );
+      void totalResult;
+
+      const totalRes = await fetch(`${SUPABASE_URL}/rest/v1/visits_activity?select=id`, {
+        method: "GET",
+        headers: {
+          apikey: SERVICE_KEY,
+          "Content-Profile": SCHEMA,
+          "Accept-Profile": SCHEMA,
+          Prefer: "count=exact",
+          Range: "0-0",
+        },
+      });
+      if (!totalRes.ok) {
+        const text = await totalRes.text();
+        throw new Error(text || `DB error ${totalRes.status}`);
+      }
+      const totalRange = totalRes.headers.get("content-range") || "";
+      const totalMatch = totalRange.match(/\\/([0-9]+)$/);
+      const totalCount = totalMatch ? Number(totalMatch[1]) : 0;
+
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+
+      const todayRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/visits_activity?select=id&daily_visit_date=eq.${encodeURIComponent(today)}`,
+        {
+          method: "GET",
+          headers: {
+            apikey: SERVICE_KEY,
+            "Content-Profile": SCHEMA,
+            "Accept-Profile": SCHEMA,
+            Prefer: "count=exact",
+            Range: "0-0",
+          },
+        }
+      );
+      if (!todayRes.ok) {
+        const text = await todayRes.text();
+        throw new Error(text || `DB error ${todayRes.status}`);
+      }
+      const todayRange = todayRes.headers.get("content-range") || "";
+      const todayMatch = todayRange.match(/\\/([0-9]+)$/);
+      const todayCount = todayMatch ? Number(todayMatch[1]) : 0;
+
       return json({
-        total:Number(row?.total || 0),
-        today:Number(row?.today || 0),
-        date:String(row?.today_date || "")
+        total_count: totalCount,
+        today_count: todayCount,
+        today_date: today,
       });
     }
-
     return json({error:"Unknown action"},400);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Server error";
