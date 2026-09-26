@@ -1,7 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
-import { getVideoPoster, getVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl } from '../lib/supabase';
+
+function ProjectMedia({ project }) {
+  const raw = String(project.videoSrc || '').trim();
+  const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
+
+  if (!raw) {
+    return <div className="project-video project-video-empty" aria-hidden="true" />;
+  }
+
+  const directUrl = getVideoUrl(raw);
+  const embedUrl = getVideoEmbedUrl(raw);
+
+  if (useEmbed) {
+    return (
+      <div className="project-video-frame">
+        <iframe
+          src={embedUrl}
+          title={project.title || 'Project video'}
+          className="project-video project-video-embed"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          allowFullScreen
+          loading="lazy"
+        />
+        <a
+          href={raw}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="project-video-open-link"
+          onClick={event => event.stopPropagation()}
+        >
+          Open video
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="project-video"
+      preload="metadata"
+      poster={getVideoPoster(raw)}
+      onError={() => {
+        if (isExternalVideoUrl(raw)) setUseEmbed(true);
+      }}
+    >
+      <source src={directUrl} />
+      Your browser does not support the video tag.
+    </video>
+  );
+}
 
 function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO", headerParagraph = "I TRIED NOT DOING FILMMAKING, AND I HATED EVERY BIT OF IT. YOU'RE IN GOOD HANDS." }) {
 
@@ -48,10 +102,7 @@ function ProjectsSection({ projects, showArrow = true, headerTitle = "PORTFOLIO"
             transition={{ duration: 0.6, delay: index * 0.1 }}
           >
             <div className="project-card-inner-border">
-              <video autoPlay loop muted playsInline className="project-video" loading="lazy" {...(getVideoPoster(project.videoSrc) ? { poster: getVideoPoster(project.videoSrc) } : {})}>
-                <source src={getVideoUrl(project.videoSrc)} />
-                Your browser does not support the video tag.
-              </video>
+              <ProjectMedia project={project} />
               <div className="project-text-overlay">
                 {project.hasBlob && <div className="yellow-blob"></div>}
                 <h3 className="project-title">{project.title}</h3>
