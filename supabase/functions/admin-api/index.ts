@@ -41,12 +41,29 @@ async function db(path:string, init:RequestInit={}) {
   return data;
 }
 
-async function dbRpc(path:string) {
-  return await db(path, {
-    method:"POST",
-    headers:{Prefer:"return=representation"},
-    body:"{}",
+async function dbCount(path:string) {
+  if (!SERVICE_KEY) throw new Error("Server database key is not configured");
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method:"GET",
+    headers:{
+      apikey:SERVICE_KEY,
+      "Content-Profile":SCHEMA,
+      "Accept-Profile":SCHEMA,
+      "Content-Type":"application/json",
+      "Prefer":"count=exact",
+      "Range":"0-0"
+    }
   });
+  if(!res.ok){
+    const text=await res.text();
+    let data:any=null;
+    try{data=text?JSON.parse(text):null}catch{data=text}
+    throw new Error(data?.message||data?.error||text||`DB count error ${res.status}`);
+  }
+  const contentRange=res.headers.get("content-range")||"";
+  const match=contentRange.match(/\/(\d+)$/);
+  if(!match) throw new Error(`Unable to read exact count from Content-Range: ${contentRange}`);
+  return Number(match[1]);
 }
 
 async function sha256(value:string) {
@@ -162,23 +179,27 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      // React sends the current India date explicitly, just like PHP date("Y-m-d").
-      // This avoids relying on the Edge Function/server timezone for "today".
       const requestedDate = String(body.today_date || "").trim();
-      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(requestedDate)) {
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
         return json({error:"A valid today_date in YYYY-MM-DD format is required"},400);
       }
 
-      const allVisits = await db("visits_activity?select=id");
-      const todayVisits = await db(
-        "visits_activity?select=id&daily_visit_date=eq." + encodeURIComponent(requestedDate)
-      );
+      const totalQuery = "visits_activity?select=id";
+      const todayQuery =
+        "visits_activity?select=id&daily_visit_date=eq."
+        + encodeURIComponent(requestedDate);
 
-      return json({
-        total_count: Array.isArray(allVisits) ? allVisits.length : 0,
-        today_count: Array.isArray(todayVisits) ? todayVisits.length : 0,
-        today_date: requestedDate,
-      });
+      const totalCount = await dbCount(totalQuery);
+      const todayCount = await dbCount(todayQuery);
+
+      const result = {
+        total_count: totalCount,
+        today_count: todayCount,
+        today_date: requestedDate
+      };
+
+      return json(result);
     }
     return json({error:"Unknown action"},400);
   } catch (e) {
