@@ -162,14 +162,22 @@ Deno.serve(async (req:Request) => {
     }
 
     if (action === "visit_stats") {
-      // Dashboard cards use the database function so the React dashboard
-      // receives the exact row counts from visits_activity.
-      const rows = await dbRpc("rpc/get_visit_stats");
-      const stats = Array.isArray(rows) ? rows[0] : rows;
+      // React sends the current India date explicitly, just like PHP date("Y-m-d").
+      // This avoids relying on the Edge Function/server timezone for "today".
+      const requestedDate = String(body.today_date || "").trim();
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(requestedDate)) {
+        return json({error:"A valid today_date in YYYY-MM-DD format is required"},400);
+      }
+
+      const allVisits = await db("visits_activity?select=id");
+      const todayVisits = await db(
+        "visits_activity?select=id&daily_visit_date=eq." + encodeURIComponent(requestedDate)
+      );
+
       return json({
-        total_count: Number(stats?.total || 0),
-        today_count: Number(stats?.today || 0),
-        today_date: stats?.today_date || null,
+        total_count: Array.isArray(allVisits) ? allVisits.length : 0,
+        today_count: Array.isArray(todayVisits) ? todayVisits.length : 0,
+        today_date: requestedDate,
       });
     }
     return json({error:"Unknown action"},400);
