@@ -4,7 +4,7 @@ import './AdminPage.css';
 
 const forms={blog:{slug:'',title:'',content:'',sort_order:0},project:{title:'',slug:'',category:'',video_src:'',is_external_link:false,has_blob:false,show_carousel:true,is_vertical:false,description:'',sort_order:0},writing:{external_id:'',title:'',url:'',sort_order:0}};
 const projectFields=['title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order'];
-const cols={blog:['id','slug','title','content','sort_order','created_at','updated_at'],project:['id','title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order','created_at','updated_at'],writing:['id','external_id','title','url','sort_order','created_at','updated_at'],visits:['id','username','email','os','browser','ip_address','location','macaddress','path','referrer','visit_count','daily_visit_count','daily_visit_date','visited_at']};
+const cols={blog:['id','slug','title','content','sort_order','created_at','updated_at'],project:['id','title','slug','category','video_src','is_external_link','has_blob','show_carousel','is_vertical','description','sort_order','created_at','updated_at'],writing:['id','external_id','title','url','sort_order','created_at','updated_at'],visits:['id','username','email','os','browser','ip_address','location','macaddress','path','referrer','daily_visit_date','visited_at']};
 const names={blog:'Blogs',project:'Projects',writing:'Writings',visits:'Visits'};
 const pretty=k=>k.replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());
 const menu=[['dashboard','Dashboard','⌂'],['project','Projects','▣'],['blog','Blogs','▤'],['writing','Writings','✎'],['visits','Visits','◉']];
