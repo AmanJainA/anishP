@@ -1,16 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
-import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl, isGoogleDriveVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl } from '../lib/supabase';
 
 function ProjectMedia({ project }) {
   const raw = String(project.videoSrc || '').trim();
   const frameRef = useRef(null);
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Google Drive is converted to a browser-playable media URL by the Supabase
-  // drive-video function, so it uses the exact same native <video> renderer as
-  // videos stored in the project's /content folder.
+  // Direct/Drive URLs use the same native <video> renderer as local videos.
+  // Only fall back to an embed when the remote media itself cannot be played.
   const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
 
   useEffect(() => {
@@ -35,12 +34,10 @@ function ProjectMedia({ project }) {
       return;
     }
 
-    // Start muted inline playback automatically as soon as the card is visible.
     video.muted = true;
     video.setAttribute('muted', '');
     const playPromise = video.play();
     if (playPromise?.catch) playPromise.catch(() => {});
-
   }, [isVisible]);
 
   if (!raw) {
@@ -80,7 +77,10 @@ function ProjectMedia({ project }) {
         preload={isVisible ? 'metadata' : 'none'}
         poster={getVideoPoster(raw)}
         onError={() => {
-          if (isExternalVideoUrl(raw) && !/^https?:\/\/drive\.google\.com/i.test(raw)) setUseEmbed(true);
+          // Drive first tries the native direct-download URL. If Google blocks
+          // native playback for a particular shared file, use its preview URL
+          // instead of leaving the project card blank.
+          if (isExternalVideoUrl(raw)) setUseEmbed(true);
         }}
       >
         {isVisible && <source src={directUrl} />}
