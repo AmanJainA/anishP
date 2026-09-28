@@ -40,14 +40,17 @@ export const getGoogleDriveDirectUrl = value => {
   const id = getGoogleDriveFileId(raw);
   if (!id) return '';
 
-  // Preserve Google Drive resource keys from shared links.
+  // Use Google's public download endpoint directly so Drive videos do not
+  // depend on a Supabase Edge Function. This URL can be consumed by the
+  // native HTML <video> element just like a normal remote MP4 when the
+  // Drive file is shared publicly.
   try {
     const url = new URL(raw);
     const resourceKey = url.searchParams.get('resourcekey');
     const suffix = resourceKey ? '&resourcekey=' + encodeURIComponent(resourceKey) : '';
-    return SUPABASE_URL + '/functions/v1/drive-video?id=' + encodeURIComponent(id) + suffix;
+    return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id) + suffix;
   } catch {
-    return SUPABASE_URL + '/functions/v1/drive-video?id=' + encodeURIComponent(id);
+    return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
   }
 };
 
