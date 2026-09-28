@@ -36,8 +36,19 @@ export const getGoogleDrivePreviewUrl = value => {
 };
 
 export const getGoogleDriveDirectUrl = value => {
-  const id = getGoogleDriveFileId(value);
-  return id ? `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}` : '';
+  const raw = cleanVideoValue(value);
+  const id = getGoogleDriveFileId(raw);
+  if (!id) return '';
+
+  // Preserve Google Drive resource keys from shared links.
+  try {
+    const url = new URL(raw);
+    const resourceKey = url.searchParams.get('resourcekey');
+    const suffix = resourceKey ? '&resourcekey=' + encodeURIComponent(resourceKey) : '';
+    return SUPABASE_URL + '/functions/v1/drive-video?id=' + encodeURIComponent(id) + suffix;
+  } catch {
+    return SUPABASE_URL + '/functions/v1/drive-video?id=' + encodeURIComponent(id);
+  }
 };
 
 const getYouTubeId = raw => {
