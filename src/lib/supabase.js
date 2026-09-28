@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || 'https://ixjdjvkktlzgiyojnsto.supabase.co';
 const SUPABASE_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || ['sb_','publishable_','Qb66X-cvzAckaQev2ku1VA__CoLmIB1'].join('');
-const SCHEMA = 'anish-portfolio';
+const SCHEMA = 'portfolio';
 
 async function request(table, params = '') {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
