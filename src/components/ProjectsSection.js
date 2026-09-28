@@ -8,7 +8,10 @@ function ProjectMedia({ project }) {
   const frameRef = useRef(null);
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [useEmbed, setUseEmbed] = useState(isGoogleDriveVideoUrl(raw) || (isExternalVideoUrl(raw) && !isDirectVideoUrl(raw)));
+  // Google Drive is converted to a browser-playable media URL by the Supabase
+  // drive-video function, so it uses the exact same native <video> renderer as
+  // videos stored in the project's /content folder.
+  const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
 
   useEffect(() => {
     const node = frameRef.current;
@@ -51,17 +54,14 @@ function ProjectMedia({ project }) {
     return (
       <div ref={frameRef} className="project-video-frame">
         {isVisible && (
-          <>
-            <iframe
-              src={isGoogleDriveVideoUrl(raw) ? `${embedUrl}${embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1&controls=0` : embedUrl}
-              title={project.title || 'Project video'}
-              className="project-video project-video-embed"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-              allowFullScreen
-              loading="lazy"
-            />
-            {isGoogleDriveVideoUrl(raw) && <div className="project-video-embed-controls-cover" aria-hidden="true" />}
-          </>
+          <iframe
+            src={embedUrl}
+            title={project.title || 'Project video'}
+            className="project-video project-video-embed"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            allowFullScreen
+            loading="lazy"
+          />
         )}
       </div>
     );
