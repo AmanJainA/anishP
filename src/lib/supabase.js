@@ -66,11 +66,32 @@ const getVimeoId = raw => {
   return '';
 };
 
+/*
+ * GitHub Pages serves this app from /anishP/.
+ * Admin users can enter either:
+ *   content/video.mp4
+ *   /content/video.mp4
+ *   https://example.com/video.mp4
+ *   Google Drive / YouTube / Vimeo URLs
+ * Local paths are resolved through PUBLIC_URL so they work on nested
+ * GitHub Pages routes such as /anishP/portfolio/project-name.
+ */
+const getLocalAssetUrl = value => {
+  const raw = cleanVideoValue(value);
+  if (!raw || isExternalVideoUrl(raw)) return raw;
+  const base = String(process.env.PUBLIC_URL || '').replace(/\/$/, '');
+  const path = raw.replace(/^\/+/, '');
+  if (base && (raw === base || raw.startsWith(`${base}/`))) return raw;
+  return `${base}/${path}`;
+};
+
 export const getVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return '';
   if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
-  return isExternalVideoUrl(raw) ? raw : (raw.endsWith('.mp4') ? raw : `${raw}.mp4`);
+  if (isExternalVideoUrl(raw)) return raw;
+  const path = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
+  return getLocalAssetUrl(path);
 };
 
 export const isDirectVideoUrl = value => {
@@ -125,7 +146,9 @@ export const getVideoEmbedUrl = value => {
 
 export const getVideoPoster = value => {
   const raw = cleanVideoValue(value);
-  return isExternalVideoUrl(raw) ? undefined : `${raw}.webp`;
+  if (isExternalVideoUrl(raw)) return undefined;
+  const videoPath = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
+  return getLocalAssetUrl(videoPath.replace(/\.mp4$/i, '.webp'));
 };
 
 export const getBlogs = () => request('blog', '?select=slug,title,content&order=sort_order.asc');
