@@ -32,7 +32,7 @@ export const getGoogleDriveFileId = value => {
 
 export const getGoogleDrivePreviewUrl = value => {
   const id = getGoogleDriveFileId(value);
-  return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1` : cleanVideoValue(value);
+  return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1&mute=1&controls=0` : cleanVideoValue(value);
 };
 
 export const getGoogleDriveDirectUrl = value => {
@@ -102,7 +102,7 @@ const getLocalAssetUrl = value => {
 export const getVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return '';
-  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
   if (isExternalVideoUrl(raw)) return raw;
   const path = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
   return getLocalAssetUrl(path);
@@ -111,7 +111,7 @@ export const getVideoUrl = value => {
 export const isDirectVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return false;
-  if (isGoogleDriveVideoUrl(raw)) return true;
+  if (isGoogleDriveVideoUrl(raw)) return false;
   if (!isExternalVideoUrl(raw)) return true;
   try {
     const url = new URL(raw);
