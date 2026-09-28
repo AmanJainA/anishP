@@ -309,3 +309,22 @@
   margin-top: 10vh;
 }
 }
+
+
+/* Google Drive preview controls are inside the cross-origin iframe and cannot
+   be styled directly. Cover only the native Drive control strip while keeping
+   the video itself visible and muted. */
+.project-video-frame {
+  position: relative;
+}
+
+.project-video-embed-controls-cover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 58px;
+  z-index: 2;
+  pointer-events: none;
+  background: transparent;
+}
