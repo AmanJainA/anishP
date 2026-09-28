@@ -320,11 +320,14 @@
 
 .project-video-embed-controls-cover {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 58px;
+  inset: 0;
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
   background: transparent;
+  cursor: default;
+}
+
+.project-video-embed {
+  pointer-events: none;
+  user-select: none;
 }
