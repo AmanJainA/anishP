@@ -51,16 +51,17 @@ function ProjectMedia({ project }) {
     return (
       <div ref={frameRef} className="project-video-frame">
         {isVisible && (
-          <iframe
-            src={isGoogleDriveVideoUrl(raw) ? `${embedUrl}${embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1&controls=0` : embedUrl}
-            title={project.title || 'Project video'}
-            className="project-video project-video-embed"
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-            controlsList="nodownload noplaybackrate"
-            allowFullScreen
-            loading="lazy"
-          />
-          {isGoogleDriveVideoUrl(raw) && <div className="project-video-embed-controls-cover" aria-hidden="true" />}
+          <>
+            <iframe
+              src={isGoogleDriveVideoUrl(raw) ? `${embedUrl}${embedUrl.includes('?') ? '&' : '?'}autoplay=1&mute=1&controls=0` : embedUrl}
+              title={project.title || 'Project video'}
+              className="project-video project-video-embed"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+              loading="lazy"
+            />
+            {isGoogleDriveVideoUrl(raw) && <div className="project-video-embed-controls-cover" aria-hidden="true" />}
+          </>
         )}
       </div>
     );
