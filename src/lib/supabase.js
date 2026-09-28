@@ -35,22 +35,18 @@ export const getGoogleDrivePreviewUrl = value => {
   return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1&mute=1&controls=0` : cleanVideoValue(value);
 };
 
-export const getGoogleDriveDirectUrl = value => {
+export const getGoogleDriveStreamUrl = value => {
   const raw = cleanVideoValue(value);
   const id = getGoogleDriveFileId(raw);
   if (!id) return '';
 
-  // Use Google's public download endpoint directly so Drive videos do not
-  // depend on a Supabase Edge Function. This URL can be consumed by the
-  // native HTML <video> element just like a normal remote MP4 when the
-  // Drive file is shared publicly.
   try {
     const url = new URL(raw);
     const resourceKey = url.searchParams.get('resourcekey');
-    const suffix = resourceKey ? '&resourcekey=' + encodeURIComponent(resourceKey) : '';
-    return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id) + suffix;
+    const suffix = resourceKey ? `&resourcekey=${encodeURIComponent(resourceKey)}` : '';
+    return `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}${suffix}`;
   } catch {
-    return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
+    return `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}`;
   }
 };
 
@@ -102,7 +98,7 @@ const getLocalAssetUrl = value => {
 export const getVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return '';
-  if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveStreamUrl(raw);
   if (isExternalVideoUrl(raw)) return raw;
   const path = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
   return getLocalAssetUrl(path);
@@ -111,12 +107,26 @@ export const getVideoUrl = value => {
 export const isDirectVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return false;
-  if (isGoogleDriveVideoUrl(raw)) return false;
+  if (isGoogleDriveVideoUrl(raw)) return true;
   if (!isExternalVideoUrl(raw)) return true;
+
+  const youtubeId = getYouTubeId(raw);
+  const vimeoId = getVimeoId(raw);
+  if (youtubeId || vimeoId) return false;
+
   try {
     const url = new URL(raw);
-    const pathname = url.pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|ogv|mov|m4v|avi|m3u8|mpd)(?:$|\/)/i.test(pathname);
+    const host = url.hostname.toLowerCase().replace(/^www\\./, '');
+    if (
+      host === 'dailymotion.com' ||
+      host === 'dai.ly' ||
+      host === 'loom.com' ||
+      host === 'wistia.com' ||
+      host.endsWith('.wistia.com')
+    ) return false;
+
+    const mediaPath = `${url.pathname}${url.search}`.toLowerCase();
+    return /\\.(mp4|m4v|webm|ogg|ogv|mpeg|mpg|mpe|mov|mkv|avi|3gp|3g2|ts|m3u8|mpd)(?:[?#&]|$)/i.test(mediaPath);
   } catch {
     return false;
   }
