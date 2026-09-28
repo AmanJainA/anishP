@@ -138,10 +138,10 @@ export const getVideoEmbedUrl = value => {
   if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
 
   const youtubeId = getYouTubeId(raw);
-  if (youtubeId) return `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&mute=1&rel=0`;
+  if (youtubeId) return `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${encodeURIComponent(youtubeId)}`;
 
   const vimeoId = getVimeoId(raw);
-  if (vimeoId) return `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}?autoplay=1&muted=1`;
+  if (vimeoId) return `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}?autoplay=1&muted=1&controls=0&loop=1&background=1`;
 
   try {
     const url = new URL(raw);
@@ -151,17 +151,17 @@ export const getVideoEmbedUrl = value => {
       const match = host === 'dai.ly'
         ? url.pathname.split('/').filter(Boolean)[0]
         : url.pathname.match(/\/video\/([^_/?#]+)/i)?.[1];
-      if (match) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(match)}?autoplay=1&mute=1`;
+      if (match) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(match)}?autoplay=1&mute=1&controls=0&loop=1`;
     }
 
     if (host === 'loom.com') {
       const id = url.pathname.match(/\/share\/([A-Za-z0-9]+)/i)?.[1] || url.pathname.match(/\/embed\/([A-Za-z0-9]+)/i)?.[1];
-      if (id) return `https://www.loom.com/embed/${id}?autoplay=1&muted=1`;
+      if (id) return `https://www.loom.com/embed/${id}?autoplay=1&muted=1&hide_owner=true&hide_share=true&hide_title=true`;
     }
 
     if (host === 'wistia.com' || host.endsWith('.wistia.com')) {
       const id = url.pathname.match(/\/medias\/([A-Za-z0-9]+)/i)?.[1];
-      if (id) return `https://fast.wistia.net/embed/iframe/${id}?autoPlay=true&muted=true`;
+      if (id) return `https://fast.wistia.net/embed/iframe/${id}?autoPlay=true&muted=true&controlsVisibleOnLoad=false`;
     }
   } catch {}
 
