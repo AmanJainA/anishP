@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import './ProjectsSection.css';
-import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl, isGoogleDriveVideoUrl } from '../lib/supabase';
+import { getVideoPoster, getVideoUrl, isExternalVideoUrl, isDirectVideoUrl, getVideoEmbedUrl } from '../lib/supabase';
 
 function ProjectMedia({ project }) {
   const raw = String(project.videoSrc || '').trim();
@@ -9,7 +9,6 @@ function ProjectMedia({ project }) {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [useEmbed, setUseEmbed] = useState(isExternalVideoUrl(raw) && !isDirectVideoUrl(raw));
-  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     const node = frameRef.current;
@@ -39,13 +38,7 @@ function ProjectMedia({ project }) {
     const playPromise = video.play();
     if (playPromise?.catch) playPromise.catch(() => {});
 
-    // Google Drive may return a non-native response. Fall back to its
-    // preview player if native playback does not become ready.
-    if (isGoogleDriveVideoUrl(raw) && !videoReady && !useEmbed) {
-      const timer = window.setTimeout(() => setUseEmbed(true), 8000);
-      return () => window.clearTimeout(timer);
-    }
-  }, [isVisible, raw, videoReady, useEmbed]);
+  }, [isVisible]);
 
   if (!raw) {
     return <div ref={frameRef} className="project-video project-video-empty" aria-hidden="true" />;
@@ -84,10 +77,8 @@ function ProjectMedia({ project }) {
         className="project-video"
         preload={isVisible ? 'metadata' : 'none'}
         poster={getVideoPoster(raw)}
-        onLoadedMetadata={() => setVideoReady(true)}
-        onCanPlay={() => setVideoReady(true)}
         onError={() => {
-          if (isExternalVideoUrl(raw)) setUseEmbed(true);
+          if (isExternalVideoUrl(raw) && !/^https?:\/\/drive\.google\.com/i.test(raw)) setUseEmbed(true);
         }}
       >
         {isVisible && <source src={directUrl} />}
