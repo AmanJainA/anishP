@@ -32,22 +32,12 @@ export const getGoogleDriveFileId = value => {
 
 export const getGoogleDrivePreviewUrl = value => {
   const id = getGoogleDriveFileId(value);
-  return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1&mute=1&controls=0` : cleanVideoValue(value);
+  return id ? `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview?autoplay=1` : cleanVideoValue(value);
 };
 
-export const getGoogleDriveStreamUrl = value => {
-  const raw = cleanVideoValue(value);
-  const id = getGoogleDriveFileId(raw);
-  if (!id) return '';
-
-  try {
-    const url = new URL(raw);
-    const resourceKey = url.searchParams.get('resourcekey');
-    const suffix = resourceKey ? `&resourcekey=${encodeURIComponent(resourceKey)}` : '';
-    return `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}${suffix}`;
-  } catch {
-    return `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}`;
-  }
+export const getGoogleDriveDirectUrl = value => {
+  const id = getGoogleDriveFileId(value);
+  return id ? `${SUPABASE_URL}/functions/v1/drive-video?id=${encodeURIComponent(id)}` : '';
 };
 
 const getYouTubeId = raw => {
@@ -76,32 +66,11 @@ const getVimeoId = raw => {
   return '';
 };
 
-/*
- * GitHub Pages serves this app from /anishP/.
- * Admin users can enter either:
- *   content/video.mp4
- *   /content/video.mp4
- *   https://example.com/video.mp4
- *   Google Drive / YouTube / Vimeo URLs
- * Local paths are resolved through PUBLIC_URL so they work on nested
- * GitHub Pages routes such as /anishP/portfolio/project-name.
- */
-const getLocalAssetUrl = value => {
-  const raw = cleanVideoValue(value);
-  if (!raw || isExternalVideoUrl(raw)) return raw;
-  const base = String(process.env.PUBLIC_URL || '').replace(/\/$/, '');
-  const path = raw.replace(/^\/+/, '');
-  if (base && (raw === base || raw.startsWith(`${base}/`))) return raw;
-  return `${base}/${path}`;
-};
-
 export const getVideoUrl = value => {
   const raw = cleanVideoValue(value);
   if (!raw) return '';
-  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveStreamUrl(raw);
-  if (isExternalVideoUrl(raw)) return raw;
-  const path = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
-  return getLocalAssetUrl(path);
+  if (isGoogleDriveVideoUrl(raw)) return getGoogleDriveDirectUrl(raw);
+  return isExternalVideoUrl(raw) ? raw : (raw.endsWith('.mp4') ? raw : `${raw}.mp4`);
 };
 
 export const isDirectVideoUrl = value => {
@@ -109,24 +78,10 @@ export const isDirectVideoUrl = value => {
   if (!raw) return false;
   if (isGoogleDriveVideoUrl(raw)) return true;
   if (!isExternalVideoUrl(raw)) return true;
-
-  const youtubeId = getYouTubeId(raw);
-  const vimeoId = getVimeoId(raw);
-  if (youtubeId || vimeoId) return false;
-
   try {
     const url = new URL(raw);
-    const host = url.hostname.toLowerCase().replace(/^www\\./, '');
-    if (
-      host === 'dailymotion.com' ||
-      host === 'dai.ly' ||
-      host === 'loom.com' ||
-      host === 'wistia.com' ||
-      host.endsWith('.wistia.com')
-    ) return false;
-
-    const mediaPath = `${url.pathname}${url.search}`.toLowerCase();
-    return /\\.(mp4|m4v|webm|ogg|ogv|mpeg|mpg|mpe|mov|mkv|avi|3gp|3g2|ts|m3u8|mpd)(?:[?#&]|$)/i.test(mediaPath);
+    const pathname = url.pathname.toLowerCase();
+    return /\.(mp4|webm|ogg|ogv|mov|m4v|avi|m3u8|mpd)(?:$|\/)/i.test(pathname);
   } catch {
     return false;
   }
@@ -138,10 +93,10 @@ export const getVideoEmbedUrl = value => {
   if (isGoogleDriveVideoUrl(raw)) return getGoogleDrivePreviewUrl(raw);
 
   const youtubeId = getYouTubeId(raw);
-  if (youtubeId) return `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${encodeURIComponent(youtubeId)}`;
+  if (youtubeId) return `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&mute=1&rel=0`;
 
   const vimeoId = getVimeoId(raw);
-  if (vimeoId) return `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}?autoplay=1&muted=1&controls=0&loop=1&background=1`;
+  if (vimeoId) return `https://player.vimeo.com/video/${encodeURIComponent(vimeoId)}?autoplay=1&muted=1`;
 
   try {
     const url = new URL(raw);
@@ -151,17 +106,17 @@ export const getVideoEmbedUrl = value => {
       const match = host === 'dai.ly'
         ? url.pathname.split('/').filter(Boolean)[0]
         : url.pathname.match(/\/video\/([^_/?#]+)/i)?.[1];
-      if (match) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(match)}?autoplay=1&mute=1&controls=0&loop=1`;
+      if (match) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(match)}?autoplay=1&mute=1`;
     }
 
     if (host === 'loom.com') {
       const id = url.pathname.match(/\/share\/([A-Za-z0-9]+)/i)?.[1] || url.pathname.match(/\/embed\/([A-Za-z0-9]+)/i)?.[1];
-      if (id) return `https://www.loom.com/embed/${id}?autoplay=1&muted=1&hide_owner=true&hide_share=true&hide_title=true`;
+      if (id) return `https://www.loom.com/embed/${id}?autoplay=1&muted=1`;
     }
 
     if (host === 'wistia.com' || host.endsWith('.wistia.com')) {
       const id = url.pathname.match(/\/medias\/([A-Za-z0-9]+)/i)?.[1];
-      if (id) return `https://fast.wistia.net/embed/iframe/${id}?autoPlay=true&muted=true&controlsVisibleOnLoad=false`;
+      if (id) return `https://fast.wistia.net/embed/iframe/${id}?autoPlay=true&muted=true`;
     }
   } catch {}
 
@@ -170,9 +125,7 @@ export const getVideoEmbedUrl = value => {
 
 export const getVideoPoster = value => {
   const raw = cleanVideoValue(value);
-  if (isExternalVideoUrl(raw)) return undefined;
-  const videoPath = raw.endsWith('.mp4') ? raw : `${raw}.mp4`;
-  return getLocalAssetUrl(videoPath.replace(/\.mp4$/i, '.webp'));
+  return isExternalVideoUrl(raw) ? undefined : `${raw}.webp`;
 };
 
 export const getBlogs = () => request('blog', '?select=slug,title,content&order=sort_order.asc');
